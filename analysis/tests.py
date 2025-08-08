@@ -13,7 +13,7 @@ class VideoAnalysisTest(APITestCase):
             password='testpass123'
         )
         self.client.force_authenticate(user=self.user)
-        self.analysis_list_url = reverse('accounts:analysis-list')
+        self.analysis_list_url = reverse('analysis:analysis-list')
 
         # Create some test analyses
         self.analysis1 = VideoAnalysis.objects.create(
@@ -44,14 +44,14 @@ class VideoAnalysisTest(APITestCase):
         self.assertEqual(VideoAnalysis.objects.count(), 3)
 
     def test_get_analysis_detail(self):
-        detail_url = reverse('accounts:analysis-detail',
+        detail_url = reverse('analysis:analysis-detail',
                              args=[self.analysis1.id])
         response = self.client.get(detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['video_name'], 'test_video1.mp4')
 
     def test_update_analysis(self):
-        detail_url = reverse('accounts:analysis-detail',
+        detail_url = reverse('analysis:analysis-detail',
                              args=[self.analysis1.id])
         payload = {
             'actual_substance': 'cocaine',
