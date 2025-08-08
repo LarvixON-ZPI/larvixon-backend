@@ -6,19 +6,16 @@ import os
 import sys
 import subprocess
 import sqlite3
+from pathlib import Path
 
 # Add the parent directory to Python path so Django can be found
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-TEST_DB_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "test_db.sqlite3"
-)
+TEST_DB_PATH = str(Path(__file__).parent.parent / "test_db.sqlite3")
 
 # Configuration
 BASE_URL = "http://127.0.0.1:8001"
 API_BASE = f"{BASE_URL}/api"
-TEST_DB = "test_db.sqlite3"
 
 
 class TestFixtures:

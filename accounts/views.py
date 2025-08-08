@@ -1,4 +1,4 @@
-from tokenize import TokenError
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response

@@ -79,7 +79,7 @@ The server will start at `http://127.0.0.1:8000`
 Run the comprehensive Django test suite:
 
 ```bash
-python manage.py test accounts
+python manage.py test
 ```
 
 ### Python Unittest
@@ -87,7 +87,7 @@ python manage.py test accounts
 Run the standalone unittest suite:
 
 ```bash
-python test_unittest.py
+python -m unittest -v -s ./tests -p "*_test.py"
 ```
 
 ## Production Deployment
