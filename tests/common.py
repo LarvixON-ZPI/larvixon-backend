@@ -158,13 +158,7 @@ class APITestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         """Tear down test environment - only when all tests are done."""
-        # This will be called for each test class, but we only want to stop once
-        if cls.server is not None:
-            cls.server.stop()
-            cls.server = None
-        # Remove test database if it exists
-        if os.path.exists(TEST_DB_PATH):
-            os.remove(TEST_DB_PATH)
+        pass
 
     def make_request(self, method, endpoint, data=None, auth=True) -> requests.Response:
         url: str = f"{API_BASE}{endpoint}"
