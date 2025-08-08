@@ -86,7 +86,7 @@ class TestDjangoServer:
                 try:
                     os.remove(db_path)
                     print("Database file removed")
-                except:
+                except OSError:
                     pass
 
     def start(self):

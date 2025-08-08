@@ -1,3 +1,4 @@
+from tokenize import TokenError
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -96,7 +97,11 @@ class UserLogoutView(APIView):
             return Response({
                 'message': 'Logout successful'
             }, status=status.HTTP_200_OK)
-        except Exception as e:
+        except KeyError:
+            return Response({
+                'error': 'Refresh token not provided'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except TokenError:
             return Response({
                 'error': 'Invalid token'
             }, status=status.HTTP_400_BAD_REQUEST)
