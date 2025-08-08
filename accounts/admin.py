@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, UserProfile, VideoAnalysis
+from .models import User, UserProfile
+from analysis.models import VideoAnalysis
 
 
 @admin.register(User)

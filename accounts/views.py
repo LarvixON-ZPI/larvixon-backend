@@ -5,7 +5,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import login
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
-from .models import User, UserProfile, VideoAnalysis
+from .models import User, UserProfile
+from analysis.models import VideoAnalysis
 from .serializers import (
     UserRegistrationSerializer,
     UserLoginSerializer,

@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import User, UserProfile, VideoAnalysis
+from .models import User, UserProfile
+from analysis.models import VideoAnalysis
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

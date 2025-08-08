@@ -4,7 +4,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import UserProfile, VideoAnalysis, User
+from .models import UserProfile, User
+from analysis.models import VideoAnalysis
 from typing import Type
 
 
