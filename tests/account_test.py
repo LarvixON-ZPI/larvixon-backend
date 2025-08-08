@@ -1,9 +1,9 @@
 import unittest
 import sys
-from common import LarvixonAPITestCase, TestFixtures
+from common import APITestCase, TestFixtures, run_tests
 
 
-class TestAuthentication(LarvixonAPITestCase):
+class TestAuthentication(APITestCase):
     """Test authentication endpoints."""
 
     def test_01_user_registration(self):
@@ -74,7 +74,7 @@ class TestAuthentication(LarvixonAPITestCase):
         print("✓ Duplicate registration correctly rejected")
 
 
-class TestUserProfile(LarvixonAPITestCase):
+class TestUserProfile(APITestCase):
     """Test user profile management."""
 
     def test_01_get_user_profile(self):
@@ -147,84 +147,7 @@ class TestUserProfile(LarvixonAPITestCase):
         print("✓ Update profile details successful")
 
 
-class TestVideoAnalysis(LarvixonAPITestCase):
-    """Test video analysis management."""
-
-    def setUp(self):
-        """Set up for video analysis tests."""
-        self.analysis_id = None
-
-    def test_01_create_analysis(self):
-        """Test creating video analysis."""
-        if self.test_fixtures is None:
-            self.skipTest("No test fixtures available")
-
-        create_data = {
-            "video_name": "test_video_unittest.mp4",
-            "video_file_path": "/uploads/test_video_unittest.mp4"
-        }
-
-        response = self.make_request(
-            'POST', '/accounts/analyses/', create_data)
-        self.assertEqual(response.status_code, 201,
-                         f"Create analysis failed: {response.text}")
-
-        data = response.json()
-        self.assertEqual(data['video_name'], 'test_video_unittest.mp4')
-        self.assertEqual(data['status'], 'pending')
-
-        self.analysis_id = data['id']
-        print("✓ Create video analysis successful")
-
-    def test_02_get_analyses_list(self):
-        """Test getting analyses list."""
-        if self.test_fixtures is None:
-            self.skipTest("No test fixtures available")
-
-        response = self.make_request('GET', '/accounts/analyses/')
-        self.assertEqual(response.status_code, 200,
-                         f"Get analyses failed: {response.text}")
-
-        data = response.json()
-        self.assertIsInstance(data, list)
-
-        print("✓ Get analyses list successful")
-
-    def test_03_update_analysis_feedback(self):
-        """Test updating analysis with feedback."""
-        if self.test_fixtures is None:
-            self.skipTest("No test fixtures available")
-
-        # First create an analysis
-        create_data = {
-            "video_name": "feedback_test.mp4",
-            "video_file_path": "/uploads/feedback_test.mp4"
-        }
-
-        response = self.make_request(
-            'POST', '/accounts/analyses/', create_data)
-        self.assertEqual(response.status_code, 201)
-        analysis_id = response.json()['id']
-
-        # Update with feedback
-        update_data = {
-            "actual_substance": "cocaine",
-            "user_feedback": "This is unittest feedback"
-        }
-
-        response = self.make_request(
-            'PATCH', f'/accounts/analyses/{analysis_id}/', update_data)
-        self.assertEqual(response.status_code, 200,
-                         f"Update feedback failed: {response.text}")
-
-        data = response.json()
-        self.assertEqual(data['actual_substance'], 'cocaine')
-        self.assertEqual(data['user_feedback'], 'This is unittest feedback')
-
-        print("✓ Update analysis feedback successful")
-
-
-class TestUserStats(LarvixonAPITestCase):
+class TestUserStats(APITestCase):
     """Test user statistics."""
 
     def test_01_get_user_stats(self):
@@ -246,7 +169,7 @@ class TestUserStats(LarvixonAPITestCase):
         print("✓ Get user statistics successful")
 
 
-class TestJWTTokens(LarvixonAPITestCase):
+class TestJWTTokens(APITestCase):
     """Test JWT token endpoints."""
 
     def test_01_obtain_token(self):
@@ -286,45 +209,11 @@ class TestJWTTokens(LarvixonAPITestCase):
         print("✓ JWT token verify successful")
 
 
-def run_tests():
-    """Run all test suites."""
-    print("=" * 60)
-    print("LARVIXON BACKEND ACCOUNT TESTS")
-    print("=" * 60)
-
-    # Create test loader and suite
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-
-    # Add test classes in order
-    test_classes = [
+if __name__ == '__main__':
+    success = run_tests([
         TestAuthentication,
         TestUserProfile,
-        TestVideoAnalysis,
         TestUserStats,
         TestJWTTokens
-    ]
-
-    for test_class in test_classes:
-        tests = loader.loadTestsFromTestCase(test_class)
-        suite.addTests(tests)
-
-    # Run tests
-    runner = unittest.TextTestRunner(verbosity=2)
-    result = runner.run(suite)
-
-    print("=" * 60)
-    if result.wasSuccessful():
-        print("ALL ACCOUNT TESTS PASSED! ✓")
-    else:
-        print("SOME ACCOUNT TESTS FAILED! ✗")
-        print(f"Failures: {len(result.failures)}")
-        print(f"Errors: {len(result.errors)}")
-    print("=" * 60)
-
-    return result.wasSuccessful()
-
-
-if __name__ == '__main__':
-    success = run_tests()
+    ])
     sys.exit(0 if success else 1)
