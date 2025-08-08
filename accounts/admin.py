@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, UserProfile
-from analysis.models import VideoAnalysis
 
 
 @admin.register(User)
@@ -40,23 +39,3 @@ class UserProfileAdmin(admin.ModelAdmin):
     search_fields = ('user__email', 'user__username',
                      'organization', 'phone_number')
     readonly_fields = ('created_at', 'updated_at')
-
-
-@admin.register(VideoAnalysis)
-class VideoAnalysisAdmin(admin.ModelAdmin):
-    """
-    Admin configuration for VideoAnalysis model.
-    """
-    list_display = ('user', 'video_name', 'status',
-                    'created_at', 'completed_at')
-    list_filter = ('status', 'created_at', 'completed_at')
-    search_fields = ('user__email', 'video_name', 'actual_substance')
-    readonly_fields = ('created_at', 'completed_at')
-
-    fieldsets = (
-        ('Basic Info', {
-         'fields': ('user', 'video_name', 'video_file_path', 'status')}),
-        ('Results', {'fields': ('results', 'confidence_scores')}),
-        ('User Feedback', {'fields': ('actual_substance', 'user_feedback')}),
-        ('Timestamps', {'fields': ('created_at', 'completed_at')}),
-    )

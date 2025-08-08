@@ -4,8 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import login
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from .models import User, UserProfile
 from analysis.models import VideoAnalysis
 from .serializers import (
@@ -13,7 +12,6 @@ from .serializers import (
     UserLoginSerializer,
     UserSerializer,
     UserProfileSerializer,
-    VideoAnalysisSerializer,
     PasswordChangeSerializer
 )
 
@@ -28,9 +26,6 @@ from .serializers import (
     tags=["Authentication"]
 )
 class UserRegistrationView(generics.CreateAPIView):
-    """
-    API view for user registration.
-    """
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
@@ -62,9 +57,6 @@ class UserRegistrationView(generics.CreateAPIView):
     tags=["Authentication"]
 )
 class UserLoginView(APIView):
-    """
-    API view for user login.
-    """
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
@@ -84,9 +76,6 @@ class UserLoginView(APIView):
 
 
 class UserLogoutView(APIView):
-    """
-    API view for user logout.
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -108,9 +97,6 @@ class UserLogoutView(APIView):
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
-    """
-    API view for retrieving and updating user profile.
-    """
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -119,9 +105,6 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
 
 class UserProfileDetailView(generics.RetrieveUpdateAPIView):
-    """
-    API view for retrieving and updating user profile details.
-    """
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -132,9 +115,6 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
 
 
 class PasswordChangeView(APIView):
-    """
-    API view for changing user password.
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -153,37 +133,9 @@ class PasswordChangeView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-class VideoAnalysisListView(generics.ListCreateAPIView):
-    """
-    API view for listing and creating video analyses.
-    """
-    serializer_class = VideoAnalysisSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return VideoAnalysis.objects.filter(user=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
-class VideoAnalysisDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    API view for retrieving, updating, and deleting specific video analysis.
-    """
-    serializer_class = VideoAnalysisSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return VideoAnalysis.objects.filter(user=self.request.user)
-
-
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
-def user_stats(request):
-    """
-    API view for getting user statistics.
-    """
+def user_stats(request) -> Response:
     user = request.user
     analyses = VideoAnalysis.objects.filter(user=user)
 

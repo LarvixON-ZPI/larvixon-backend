@@ -2,7 +2,6 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from .models import User, UserProfile
-from analysis.models import VideoAnalysis
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -78,20 +77,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'first_name',
                   'last_name', 'date_joined', 'profile')
         read_only_fields = ('id', 'username', 'date_joined')
-
-
-class VideoAnalysisSerializer(serializers.ModelSerializer):
-    """
-    Serializer for video analysis records.
-    """
-    user = serializers.StringRelatedField(
-        read_only=True)  # type: ignore
-
-    class Meta:  # type: ignore
-        model = VideoAnalysis
-        fields = ('id', 'user', 'video_name', 'status', 'created_at', 'completed_at',
-                  'results', 'confidence_scores', 'actual_substance', 'user_feedback')
-        read_only_fields = ('id', 'user', 'created_at', 'completed_at')
 
 
 class PasswordChangeSerializer(serializers.Serializer):

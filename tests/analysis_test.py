@@ -21,7 +21,7 @@ class TestVideoAnalysis(APITestCase):
         }
 
         response = self.make_request(
-            'POST', '/accounts/analyses/', create_data)
+            'POST', '/analysis/', create_data)
         self.assertEqual(response.status_code, 201,
                          f"Create analysis failed: {response.text}")
 
@@ -37,7 +37,7 @@ class TestVideoAnalysis(APITestCase):
         if self.test_fixtures is None:
             self.skipTest("No test fixtures available")
 
-        response = self.make_request('GET', '/accounts/analyses/')
+        response = self.make_request('GET', '/analysis/')
         self.assertEqual(response.status_code, 200,
                          f"Get analyses failed: {response.text}")
 
@@ -58,7 +58,7 @@ class TestVideoAnalysis(APITestCase):
         }
 
         response = self.make_request(
-            'POST', '/accounts/analyses/', create_data)
+            'POST', '/analysis/', create_data)
         self.assertEqual(response.status_code, 201)
         analysis_id = response.json()['id']
 
@@ -69,7 +69,7 @@ class TestVideoAnalysis(APITestCase):
         }
 
         response = self.make_request(
-            'PATCH', f'/accounts/analyses/{analysis_id}/', update_data)
+            'PATCH', f'/analysis/{analysis_id}/', update_data)
         self.assertEqual(response.status_code, 200,
                          f"Update feedback failed: {response.text}")
 

@@ -40,6 +40,7 @@ urlpatterns = [
 
     # API endpoints
     path('api/accounts/', include('accounts.urls')),
+    path('api/analysis/', include('analysis.urls')),
 
     # JWT token endpoints (alternative to custom login)
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

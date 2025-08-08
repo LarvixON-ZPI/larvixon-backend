@@ -1,9 +1,10 @@
 from django.urls import path
+from django.urls.resolvers import URLPattern
 from . import views
 
 app_name = 'accounts'
 
-urlpatterns = [
+urlpatterns: list[URLPattern] = [
     # Authentication endpoints
     path('register/', views.UserRegistrationView.as_view(), name='register'),
     path('login/', views.UserLoginView.as_view(), name='login'),
@@ -16,9 +17,4 @@ urlpatterns = [
     path('password/change/', views.PasswordChangeView.as_view(),
          name='password-change'),
     path('stats/', views.user_stats, name='user-stats'),
-
-    # Video analysis endpoints
-    path('analyses/', views.VideoAnalysisListView.as_view(), name='analysis-list'),
-    path('analyses/<int:pk>/', views.VideoAnalysisDetailView.as_view(),
-         name='analysis-detail'),
 ]
