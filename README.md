@@ -1,5 +1,7 @@
 # Larvixon Backend
 
+[![Django CI](https://github.com/LarvixON-ZPI/larvixon-backend/actions/workflows/django.yml/badge.svg)](https://github.com/LarvixON-ZPI/larvixon-backend/actions/workflows/django.yml)
+
 REST API backend for the Larvixon larval behavior analysis system. Built with Django REST Framework and includes comprehensive user account management and video analysis tracking.
 
 ## Features
@@ -85,6 +87,20 @@ Run the comprehensive Django test suite:
 python manage.py test
 ```
 
+### CI/CD pipelines
+
+Recommended to install [nektos/act](https://github.com/nektos/act) and Docker Desktop.
+
+then run:
+
+```sh
+act --workflows ".github/workflows/django.yml" \
+    --job build \
+    -P ubuntu-latest=catthehacker/ubuntu:act-22.04
+```
+
+Just ubuntu-latests results in this issue: <https://github.com/nektos/act/issues/251>
+
 ## Production Deployment
 
 For production deployment:
@@ -101,3 +117,16 @@ For production deployment:
 1. Follow Django/DRF best practices
 2. Add Swagger documentation to new endpoints
 3. Write comprehensive tests for new features
+4. Try to follow [Conventional Commit Messages](https://gist.github.com/qoomon/5dfcdf8eec66a051ecd85625518cfd13)
+
+## Recommended tooling
+
+### Python
+
+Using version 3.12.6
+
+Recommended to enable Pylance type checking
+
+Test GitHub workflows locally with nektos/act
+
+VSCode with extensions like Pylance, GitHub Local Actions
