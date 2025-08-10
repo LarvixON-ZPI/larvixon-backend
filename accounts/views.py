@@ -12,7 +12,8 @@ from .serializers import (
     UserLoginSerializer,
     UserSerializer,
     UserProfileSerializer,
-    PasswordChangeSerializer
+    PasswordChangeSerializer,
+    UserStatsSerializer
 )
 
 
@@ -30,7 +31,7 @@ class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -77,8 +78,9 @@ class UserLoginView(APIView):
 
 class UserLogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = None
 
-    def post(self, request):
+    def post(self, request) -> Response:
         try:
             refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
@@ -114,37 +116,47 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
         return profile
 
 
+class UserProfileStats(generics.RetrieveAPIView):
+    serializer_class = UserStatsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        user = self.request.user
+        analyses = VideoAnalysis.objects.filter(user=user)
+
+        stats = {
+            'total_analyses': analyses.count(),
+            'completed_analyses': analyses.filter(status='completed').count(),
+            'pending_analyses': analyses.filter(status='pending').count(),
+            'processing_analyses': analyses.filter(status='processing').count(),
+            'failed_analyses': analyses.filter(status='failed').count(),
+        }
+
+        return stats
+
+
 class PasswordChangeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request):
+    @extend_schema(
+        summary="Change user password",
+        description="Change the authenticated user's password.",
+        request=PasswordChangeSerializer,
+        responses={200: OpenApiResponse(
+            description="Password changed successfully")},
+        tags=["Authentication"]
+    )
+    def post(self, request) -> Response:
         serializer = PasswordChangeSerializer(
             data=request.data,
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
 
-        user = request.user
+        user: User = request.user
         user.set_password(serializer.validated_data['new_password'])
         user.save()
 
         return Response({
             'message': 'Password changed successfully'
         }, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
-def user_stats(request) -> Response:
-    user = request.user
-    analyses = VideoAnalysis.objects.filter(user=user)
-
-    stats = {
-        'total_analyses': analyses.count(),
-        'completed_analyses': analyses.filter(status='completed').count(),
-        'pending_analyses': analyses.filter(status='pending').count(),
-        'processing_analyses': analyses.filter(status='processing').count(),
-        'failed_analyses': analyses.filter(status='failed').count(),
-    }
-
-    return Response(stats, status=status.HTTP_200_OK)

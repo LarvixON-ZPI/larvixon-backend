@@ -16,5 +16,5 @@ urlpatterns: list[URLPattern] = [
          name='profile-details'),
     path('password/change/', views.PasswordChangeView.as_view(),
          name='password-change'),
-    path('stats/', views.user_stats, name='user-stats'),
+    path('profile/stats/', views.UserProfileStats.as_view(), name='user-stats'),
 ]

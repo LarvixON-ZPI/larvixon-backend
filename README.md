@@ -49,6 +49,9 @@ python manage.py migrate
 
 # Create superuser
 python manage.py createsuperuser
+
+# Seed database
+python manage.py seed
 ```
 
 ### 3. Run Server

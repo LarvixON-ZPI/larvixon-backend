@@ -5,12 +5,12 @@ from ...models import User
 
 
 class Command(BaseCommand):
-    help = 'Seed the database with an admin user.'
+    help = 'Seed the database with a quick to test user.'
 
     def handle(self, *args, **options) -> None:
         UserModel = cast(type[User], get_user_model())
-        email = 'admin@gmail.com'
-        password = '1234'
+        email = 'a@b.c'
+        password = '1'
         if not UserModel.objects.filter(email=email).exists():
             user: User = UserModel.objects.create_user(
                 email=email, password=password, username=email)

@@ -5,9 +5,6 @@ from .models import User, UserProfile
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    """
-    Serializer for user registration.
-    """
     password = serializers.CharField(
         write_only=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True)
@@ -31,9 +28,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class UserLoginSerializer(serializers.Serializer):
-    """
-    Serializer for user login.
-    """
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
@@ -56,9 +50,6 @@ class UserLoginSerializer(serializers.Serializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    """
-    Serializer for user profile.
-    """
     class Meta:  # type: ignore
         model = UserProfile
         fields = ('bio', 'phone_number', 'organization',
@@ -67,9 +58,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """
-    Serializer for user information.
-    """
     profile = UserProfileSerializer(read_only=True)
 
     class Meta:  # type: ignore
@@ -80,9 +68,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class PasswordChangeSerializer(serializers.Serializer):
-    """
-    Serializer for password change.
-    """
     old_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(
         write_only=True, validators=[validate_password])
@@ -98,3 +83,11 @@ class PasswordChangeSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Old password is incorrect.")
         return value
+
+
+class UserStatsSerializer(serializers.Serializer):
+    total_analyses = serializers.IntegerField()
+    completed_analyses = serializers.IntegerField()
+    pending_analyses = serializers.IntegerField()
+    processing_analyses = serializers.IntegerField()
+    failed_analyses = serializers.IntegerField()
