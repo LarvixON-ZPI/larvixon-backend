@@ -85,14 +85,6 @@ Run the comprehensive Django test suite:
 python manage.py test
 ```
 
-### Python Unittest
-
-Run the standalone unittest suite:
-
-```bash
-python -m unittest -v -s ./tests -p "*_test.py"
-```
-
 ## Production Deployment
 
 For production deployment:
