@@ -1,8 +1,6 @@
 from rest_framework import generics, permissions
 from analysis.models import VideoAnalysis
-from .serializers import (
-    VideoAnalysisSerializer
-)
+from .serializers import VideoAnalysisSerializer
 
 
 class VideoAnalysisListView(generics.ListCreateAPIView):

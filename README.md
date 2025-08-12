@@ -118,14 +118,13 @@ For production deployment:
 2. Add Swagger documentation to new endpoints
 3. Write comprehensive tests for new features
 4. Try to follow [Conventional Commit Messages](https://gist.github.com/qoomon/5dfcdf8eec66a051ecd85625518cfd13)
+5. Use Python Black formatter and ensure type checking is set as Standard or higher
 
 ## Recommended tooling
 
 ### Python
 
 Using version 3.12.6
-
-Recommended to enable Pylance type checking
 
 Test GitHub workflows locally with nektos/act
 

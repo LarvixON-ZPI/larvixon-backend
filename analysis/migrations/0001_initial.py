@@ -15,22 +15,44 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='VideoAnalysis',
+            name="VideoAnalysis",
             fields=[
-                ('id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('video_name', models.CharField(max_length=255)),
-                ('video_file_path', models.CharField(max_length=500)),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('processing', 'Processing'), ('completed', 'Completed'), ('failed', 'Failed')], default='pending', max_length=20)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('completed_at', models.DateTimeField(blank=True, null=True)),
-                ('results', models.JSONField(blank=True, null=True)),
-                ('confidence_scores', models.JSONField(blank=True, null=True)),
-                ('actual_substance', models.CharField(blank=True, max_length=100, null=True)),
-                ('user_feedback', models.TextField(blank=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='analyses', to=settings.AUTH_USER_MODEL)),
+                ("id", models.BigAutoField(primary_key=True, serialize=False)),
+                ("video_name", models.CharField(max_length=255)),
+                ("video_file_path", models.CharField(max_length=500)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("processing", "Processing"),
+                            ("completed", "Completed"),
+                            ("failed", "Failed"),
+                        ],
+                        default="pending",
+                        max_length=20,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("completed_at", models.DateTimeField(blank=True, null=True)),
+                ("results", models.JSONField(blank=True, null=True)),
+                ("confidence_scores", models.JSONField(blank=True, null=True)),
+                (
+                    "actual_substance",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                ("user_feedback", models.TextField(blank=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="analyses",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
     ]

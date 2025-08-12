@@ -13,7 +13,7 @@ from .serializers import (
     UserSerializer,
     UserProfileSerializer,
     PasswordChangeSerializer,
-    UserStatsSerializer
+    UserStatsSerializer,
 )
 
 
@@ -24,7 +24,7 @@ from .serializers import (
         201: OpenApiResponse(description="User registered successfully"),
         400: OpenApiResponse(description="Validation error"),
     },
-    tags=["Authentication"]
+    tags=["Authentication"],
 )
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -39,12 +39,15 @@ class UserRegistrationView(generics.CreateAPIView):
         # Generate tokens
         refresh = RefreshToken.for_user(user)
 
-        return Response({
-            'user': UserSerializer(user).data,
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'message': 'User registered successfully'
-        }, status=status.HTTP_201_CREATED)
+        return Response(
+            {
+                "user": UserSerializer(user).data,
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "message": "User registered successfully",
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 @extend_schema(
@@ -55,7 +58,7 @@ class UserRegistrationView(generics.CreateAPIView):
         200: OpenApiResponse(description="Login successful"),
         400: OpenApiResponse(description="Invalid credentials"),
     },
-    tags=["Authentication"]
+    tags=["Authentication"],
 )
 class UserLoginView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -63,17 +66,20 @@ class UserLoginView(APIView):
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
+        user = serializer.validated_data["user"]
 
         # Generate tokens
         refresh = RefreshToken.for_user(user)
 
-        return Response({
-            'user': UserSerializer(user).data,
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'message': 'Login successful'
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "user": UserSerializer(user).data,
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "message": "Login successful",
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class UserLogoutView(APIView):
@@ -85,17 +91,16 @@ class UserLogoutView(APIView):
             refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response({
-                'message': 'Logout successful'
-            }, status=status.HTTP_200_OK)
+            return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
         except KeyError:
-            return Response({
-                'error': 'Refresh token not provided'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Refresh token not provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except TokenError:
-            return Response({
-                'error': 'Invalid token'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -111,8 +116,7 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        profile, created = UserProfile.objects.get_or_create(
-            user=self.request.user)
+        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
         return profile
 
 
@@ -125,11 +129,11 @@ class UserProfileStats(generics.RetrieveAPIView):
         analyses = VideoAnalysis.objects.filter(user=user)
 
         stats = {
-            'total_analyses': analyses.count(),
-            'completed_analyses': analyses.filter(status='completed').count(),
-            'pending_analyses': analyses.filter(status='pending').count(),
-            'processing_analyses': analyses.filter(status='processing').count(),
-            'failed_analyses': analyses.filter(status='failed').count(),
+            "total_analyses": analyses.count(),
+            "completed_analyses": analyses.filter(status="completed").count(),
+            "pending_analyses": analyses.filter(status="pending").count(),
+            "processing_analyses": analyses.filter(status="processing").count(),
+            "failed_analyses": analyses.filter(status="failed").count(),
         }
 
         return stats
@@ -142,21 +146,19 @@ class PasswordChangeView(APIView):
         summary="Change user password",
         description="Change the authenticated user's password.",
         request=PasswordChangeSerializer,
-        responses={200: OpenApiResponse(
-            description="Password changed successfully")},
-        tags=["Authentication"]
+        responses={200: OpenApiResponse(description="Password changed successfully")},
+        tags=["Authentication"],
     )
     def post(self, request) -> Response:
         serializer = PasswordChangeSerializer(
-            data=request.data,
-            context={'request': request}
+            data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
 
         user: User = request.user
-        user.set_password(serializer.validated_data['new_password'])
+        user.set_password(serializer.validated_data["new_password"])
         user.save()
 
-        return Response({
-            'message': 'Password changed successfully'
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Password changed successfully"}, status=status.HTTP_200_OK
+        )

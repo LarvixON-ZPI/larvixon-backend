@@ -29,7 +29,7 @@ class TestFixtures:
             "password": "testpass123",
             "password_confirm": "testpass123",
             "first_name": "Test",
-            "last_name": "User"
+            "last_name": "User",
         }
 
     @staticmethod
@@ -41,17 +41,17 @@ class TestFixtures:
         response = requests.post(
             f"{api_base}/accounts/register/",
             json=test_user_data,
-            headers={'Content-Type': 'application/json'},
-            timeout=10
+            headers={"Content-Type": "application/json"},
+            timeout=10,
         )
 
         if response.status_code == 201:
             data = response.json()
             return {
-                'user_data': test_user_data,
-                'access_token': data['access'],
-                'refresh_token': data['refresh'],
-                'user_id': data['user']['id']
+                "user_data": test_user_data,
+                "access_token": data["access"],
+                "refresh_token": data["refresh"],
+                "user_id": data["user"]["id"],
             }
         else:
             raise Exception(f"Failed to create test user: {response.text}")
@@ -60,14 +60,13 @@ class TestFixtures:
 class TestDjangoServer:
     def __init__(self) -> None:
         self.process = None
-        self.project_root = os.path.dirname(
-            os.path.dirname(os.path.abspath(__file__)))
+        self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     def setup_test_database(self) -> None:
         if os.path.exists(TEST_DB_PATH):
             os.remove(TEST_DB_PATH)
 
-        os.environ['DJANGO_DB_PATH'] = TEST_DB_PATH
+        os.environ["DJANGO_DB_PATH"] = TEST_DB_PATH
 
     def teardown_test_database(self) -> None:
         if os.path.exists(TEST_DB_PATH):
@@ -77,21 +76,18 @@ class TestDjangoServer:
         try:
             self.setup_test_database()
 
-            os.environ['DJANGO_SETTINGS_MODULE'] = 'larvixon_site.settings'
+            os.environ["DJANGO_SETTINGS_MODULE"] = "larvixon_site.settings"
 
             # Run migrations first - use project root as cwd
             migration_cmd = [
                 sys.executable,
-                'manage.py',
-                'migrate',
-                '--settings=larvixon_site.settings'
+                "manage.py",
+                "migrate",
+                "--settings=larvixon_site.settings",
             ]
 
             migration_process = subprocess.run(
-                migration_cmd,
-                cwd=self.project_root,
-                capture_output=True,
-                text=True
+                migration_cmd, cwd=self.project_root, capture_output=True, text=True
             )
 
             if migration_process.returncode != 0:
@@ -100,17 +96,17 @@ class TestDjangoServer:
             # Start server in a separate process - use project root as cwd
             cmd = [
                 sys.executable,
-                'manage.py',
-                'runserver',
-                '127.0.0.1:8001',
-                '--settings=larvixon_site.settings'
+                "manage.py",
+                "runserver",
+                "127.0.0.1:8001",
+                "--settings=larvixon_site.settings",
             ]
 
             self.process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                cwd=self.project_root
+                cwd=self.project_root,
             )
 
             # Wait for server to start
@@ -118,8 +114,7 @@ class TestDjangoServer:
 
             # Check if server is running
             try:
-                requests.get(
-                    f"{BASE_URL}/api/accounts/register/", timeout=5)
+                requests.get(f"{BASE_URL}/api/accounts/register/", timeout=5)
                 return True
             except requests.exceptions.RequestException:
                 return False
@@ -145,15 +140,13 @@ class APITestCase(unittest.TestCase):
         """Set up test environment - shared across all test classes."""
         if cls.server is None:
             cls.server = TestDjangoServer()
-            cls.headers = {'Content-Type': 'application/json'}
+            cls.headers = {"Content-Type": "application/json"}
 
             if not cls.server.start():
                 raise Exception("Failed to start Django test server")
 
-            cls.test_fixtures = TestFixtures.create_test_user(
-                BASE_URL, API_BASE)
-            print(
-                f"Test user created: {cls.test_fixtures['user_data']['email']}")
+            cls.test_fixtures = TestFixtures.create_test_user(BASE_URL, API_BASE)
+            print(f"Test user created: {cls.test_fixtures['user_data']['email']}")
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -165,19 +158,17 @@ class APITestCase(unittest.TestCase):
         headers: dict[str, str] = self.headers.copy()
 
         if auth and self.test_fixtures is not None:
-            headers['Authorization'] = f'Bearer {self.test_fixtures["access_token"]}'
+            headers["Authorization"] = f'Bearer {self.test_fixtures["access_token"]}'
 
         try:
             response: requests.Response
-            if method.upper() == 'GET':
+            if method.upper() == "GET":
                 response = requests.get(url, headers=headers, timeout=10)
-            elif method.upper() == 'POST':
-                response = requests.post(
-                    url, json=data, headers=headers, timeout=10)
-            elif method.upper() == 'PATCH':
-                response = requests.patch(
-                    url, json=data, headers=headers, timeout=10)
-            elif method.upper() == 'DELETE':
+            elif method.upper() == "POST":
+                response = requests.post(url, json=data, headers=headers, timeout=10)
+            elif method.upper() == "PATCH":
+                response = requests.patch(url, json=data, headers=headers, timeout=10)
+            elif method.upper() == "DELETE":
                 response = requests.delete(url, headers=headers, timeout=10)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
