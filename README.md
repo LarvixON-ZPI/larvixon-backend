@@ -54,8 +54,18 @@ python manage.py createsuperuser
 
 # Seed database
 python manage.py seed
+```
 
-# Setup social apps (for google login)
+#### Configuring Social Authentication
+For Google Login create .env
+```bash
+GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID"
+GOOGLE_SECRET="YOUR_GOOGLE_SECRET_KEY"
+```
+And fill it with your own keys from https://console.cloud.google.com
+
+Now load these entries into your local database
+```bash
 python manage.py loaddata social_apps.json
 ```
 
