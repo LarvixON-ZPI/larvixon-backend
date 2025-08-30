@@ -64,11 +64,6 @@ GOOGLE_SECRET="YOUR_GOOGLE_SECRET_KEY"
 ```
 And fill it with your own keys from https://console.cloud.google.com
 
-Now load these entries into your local database
-```bash
-python manage.py loaddata social_apps.json
-```
-
 ### 3. Run Server
 
 ```bash
