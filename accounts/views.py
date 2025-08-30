@@ -5,6 +5,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from dj_rest_auth.registration.views import SocialLoginView
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from .models import User, UserProfile
 from analysis.models import VideoAnalysis
 from .serializers import (
@@ -13,7 +16,7 @@ from .serializers import (
     UserSerializer,
     UserProfileSerializer,
     PasswordChangeSerializer,
-    UserStatsSerializer,
+    UserStatsSerializer
 )
 
 
@@ -162,3 +165,42 @@ class PasswordChangeView(APIView):
         return Response(
             {"message": "Password changed successfully"}, status=status.HTTP_200_OK
         )
+
+class SocialLoginJWTViewMixin:
+    def post(self, request, *args, **kwargs):
+        super().post(request, *args, **kwargs)
+
+        user = request.user
+
+        if user.is_authenticated:
+            refresh = RefreshToken.for_user(user)
+            access = str(refresh.access_token)
+            
+            user_data = UserSerializer(user).data
+
+            return Response({
+                'user': user_data,
+                'access': access,
+                'refresh': str(refresh),
+                'message': "Social login successful"
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"error": "Social login failed. Authentication was not successful."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+@extend_schema(
+    summary="Google social authentication",
+    tags=["Authentication"],
+)
+class GoogleLogin(SocialLoginJWTViewMixin, SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+
+@extend_schema(
+    summary="Facebook social authentication idk if this works",
+    tags=["Authentication"],
+)
+class FacebookLogin(SocialLoginJWTViewMixin, SocialLoginView):
+    adapter_class = FacebookOAuth2Adapter

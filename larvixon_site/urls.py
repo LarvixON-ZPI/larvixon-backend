@@ -40,6 +40,7 @@ urlpatterns = [
     ),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     # API endpoints
+    path("accounts/", include("allauth.urls")),
     path("api/accounts/", include("accounts.urls")),
     path("api/analysis/", include("analysis.urls")),
     # JWT token endpoints (alternative to custom login)

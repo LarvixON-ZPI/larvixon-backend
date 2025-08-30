@@ -7,6 +7,8 @@ app_name = "accounts"
 urlpatterns: list[URLPattern] = [
     # Authentication endpoints
     path("register/", views.UserRegistrationView.as_view(), name="register"),
+    path('auth/google/', views.GoogleLogin.as_view(), name='google_login'),
+    path('auth/facebook/', views.FacebookLogin.as_view(), name='facebook_login'),
     path("login/", views.UserLoginView.as_view(), name="login"),
     path("logout/", views.UserLogoutView.as_view(), name="logout"),
     # User profile endpoints

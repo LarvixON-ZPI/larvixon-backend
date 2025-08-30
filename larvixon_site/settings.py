@@ -38,8 +38,17 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django.contrib.sites',  
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',   
+    'allauth.socialaccount.providers.facebook',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
     "rest_framework",
     "rest_framework_simplejwt",
+    'rest_framework.authtoken',
     "drf_spectacular",
     "corsheaders",
     "accounts",
@@ -55,6 +64,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = "larvixon_site.urls"
@@ -109,6 +119,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Social authentication settings
+SITE_ID = 1
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -131,6 +147,14 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': 'my-app-auth',
+    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
+    'JWT_AUTH_REFRESH_COOKIE': 'my-refresh-token', 
+    'JWT_AUTH_REFRESH_TOKEN_LIFETIME': timedelta(days=7), 
+}
 
 # Django REST Framework settings
 REST_FRAMEWORK = {
