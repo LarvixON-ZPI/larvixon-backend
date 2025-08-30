@@ -54,6 +54,9 @@ python manage.py createsuperuser
 
 # Seed database
 python manage.py seed
+
+# Setup social apps (for google login)
+python manage.py loaddata social_apps.json
 ```
 
 ### 3. Run Server
