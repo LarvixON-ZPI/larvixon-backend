@@ -20,6 +20,7 @@ jsonschema==4.25.0
 jsonschema-specifications==2025.4.1
 pycparser==2.22
 PyJWT==2.10.1
+python-decouple==3.8
 PyYAML==6.0.2
 referencing==0.36.2
 requests==2.32.4
