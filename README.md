@@ -57,12 +57,15 @@ python manage.py seed
 ```
 
 #### Configuring Social Authentication
+
 For Google Login create .env
+
 ```bash
 GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID"
 GOOGLE_SECRET="YOUR_GOOGLE_SECRET_KEY"
 ```
-And fill it with your own keys from https://console.cloud.google.com
+
+And fill it with your own keys from <https://console.cloud.google.com>
 
 ### 3. Run Server
 
