@@ -1,23 +1,26 @@
 from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework import generics, status, permissions
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import generics, status, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+# Drf Spectacular imports
+from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
+# Dj-rest-auth imports
 from dj_rest_auth.registration.views import SocialLoginView
+# Allauth social account imports
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
-from .models import User, UserProfile
-from analysis.models import VideoAnalysis
-from .serializers import (
+# Allauth MFA imports
+from allauth.mfa.utils import is_mfa_enabled
+# App's local imports
+from ..models import User
+from ..serializers import (
     UserRegistrationSerializer,
     UserLoginSerializer,
     UserSerializer,
-    UserProfileSerializer,
-    PasswordChangeSerializer,
-    UserStatsSerializer
+    MFALoginSerializer,
 )
+from ..utils import verify_mfa_code
 
 
 @extend_schema(
@@ -52,14 +55,14 @@ class UserRegistrationView(generics.CreateAPIView):
             status=status.HTTP_201_CREATED,
         )
 
-
 @extend_schema(
-    summary="User login",
-    description="Authenticate user with email and password",
-    request=UserLoginSerializer,
+    summary="User login with optional 2FA",
+    description="Authenticate user with email/password. If 2FA is enabled, a second-factor code must be provided.",
+    request=MFALoginSerializer,
     responses={
-        200: OpenApiResponse(description="Login successful"),
-        400: OpenApiResponse(description="Invalid credentials"),
+        200: OpenApiResponse(description="Login successful with or without 2FA"),
+        400: OpenApiResponse(description="Invalid credentials or MFA code"),
+        202: OpenApiResponse(description="MFA is required but not provided"),
     },
     tags=["Authentication"],
 )
@@ -71,7 +74,22 @@ class UserLoginView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
 
-        # Generate tokens
+        if is_mfa_enabled(user):
+            mfa_code = request.data.get("mfa_code")
+            if not mfa_code:
+                return Response(
+                    {"detail": "MFA is required."},
+                    status=status.HTTP_202_ACCEPTED
+                )
+
+            is_valid, error_message, _ = verify_mfa_code(user, mfa_code)
+            if not is_valid:
+                return Response(
+                    {"detail": error_message},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # If MFA is not enabled or the code was valid, issue tokens
         refresh = RefreshToken.for_user(user)
 
         return Response(
@@ -83,7 +101,6 @@ class UserLoginView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-
 
 class UserLogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -105,74 +122,31 @@ class UserLogoutView(APIView):
                 {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-
-class UserProfileView(generics.RetrieveUpdateAPIView):
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user
-
-
-class UserProfileDetailView(generics.RetrieveUpdateAPIView):
-    serializer_class = UserProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
-        return profile
-
-
-class UserProfileStats(generics.RetrieveAPIView):
-    serializer_class = UserStatsSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        user = self.request.user
-        analyses = VideoAnalysis.objects.filter(user=user)
-
-        stats = {
-            "total_analyses": analyses.count(),
-            "completed_analyses": analyses.filter(status="completed").count(),
-            "pending_analyses": analyses.filter(status="pending").count(),
-            "processing_analyses": analyses.filter(status="processing").count(),
-            "failed_analyses": analyses.filter(status="failed").count(),
-        }
-
-        return stats
-
-
-class PasswordChangeView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    @extend_schema(
-        summary="Change user password",
-        description="Change the authenticated user's password.",
-        request=PasswordChangeSerializer,
-        responses={200: OpenApiResponse(description="Password changed successfully")},
-        tags=["Authentication"],
-    )
-    def post(self, request) -> Response:
-        serializer = PasswordChangeSerializer(
-            data=request.data, context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-
-        user: User = request.user
-        user.set_password(serializer.validated_data["new_password"])
-        user.save()
-
-        return Response(
-            {"message": "Password changed successfully"}, status=status.HTTP_200_OK
-        )
-
 class SocialLoginJWTViewMixin:
     def post(self, request, *args, **kwargs):
+        # Authenticate the user with the social provider (Google, Facebook, etc.)
         super().post(request, *args, **kwargs)
 
         user = request.user
 
         if user.is_authenticated:
+            # Check if MFA is enabled for this user after a successful social login
+            if is_mfa_enabled(user):
+                mfa_code = request.data.get("mfa_code")
+                if not mfa_code:
+                    return Response(
+                        {"detail": "MFA is required."},
+                        status=status.HTTP_202_ACCEPTED
+                    )
+                
+                is_valid, error_message, _ = verify_mfa_code(user, mfa_code)
+                if not is_valid:
+                    return Response(
+                        {"detail": error_message},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # If no MFA is enabled or the MFA code was valid, issue tokens
             refresh = RefreshToken.for_user(user)
             access = str(refresh.access_token)
             
@@ -191,9 +165,31 @@ class SocialLoginJWTViewMixin:
             )
 
 
+
 @extend_schema(
     summary="Google social authentication",
     tags=["Authentication"],
+    request=inline_serializer(
+        name="GoogleLoginRequest",
+        fields={
+            "access_token": serializers.CharField(
+                help_text="Google OAuth2 access token.",
+                required=False
+            ),
+            "code": serializers.CharField(
+                help_text="Google OAuth2 authorization code.",
+                required=False
+            ),
+            "id_token": serializers.CharField(
+                help_text="Google OAuth2 ID token.",
+                required=False
+            ),
+            "mfa_code": serializers.CharField(
+                help_text="2FA code required for MFA-enabled accounts.",
+                required=False
+            ),
+        }
+    )
 )
 class GoogleLogin(SocialLoginJWTViewMixin, SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
