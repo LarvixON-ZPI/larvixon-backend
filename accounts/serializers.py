@@ -102,3 +102,12 @@ class UserStatsSerializer(serializers.Serializer):
     pending_analyses = serializers.IntegerField()
     processing_analyses = serializers.IntegerField()
     failed_analyses = serializers.IntegerField()
+
+
+class MFALoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    mfa_code = serializers.CharField(write_only=True, required=False)
+
+class MFAVerifySerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=6, required=True, help_text="The 6-digit MFA code from the authenticator app.")

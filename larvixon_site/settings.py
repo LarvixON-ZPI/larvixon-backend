@@ -45,6 +45,9 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',   
     'allauth.socialaccount.providers.facebook',
+    'allauth.mfa',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
     'dj_rest_auth',
     'dj_rest_auth.registration',
     "rest_framework",
@@ -65,6 +68,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    'django_otp.middleware.OTPMiddleware',
     'allauth.account.middleware.AccountMiddleware',
 ]
 
@@ -136,6 +140,9 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+
+# 2FA settings
+ACCOUNT_MFA_MANDATORY = True 
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

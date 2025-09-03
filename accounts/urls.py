@@ -11,6 +11,10 @@ urlpatterns: list[URLPattern] = [
     path('auth/facebook/', views.FacebookLogin.as_view(), name='facebook_login'),
     path("login/", views.UserLoginView.as_view(), name="login"),
     path("logout/", views.UserLogoutView.as_view(), name="logout"),
+    # 2FA Endpoints
+    path("mfa/setup/", views.MFASetupView.as_view(), name="mfa_setup"),
+    path("mfa/verify/", views.MFAVerifyView.as_view(), name="mfa_verify"),
+    path("mfa/deactivate/", views.MFADeactivateView.as_view(), name="mfa_deactivate"),
     # User profile endpoints
     path("profile/", views.UserProfileView.as_view(), name="profile"),
     path(
