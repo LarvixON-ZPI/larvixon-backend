@@ -27,8 +27,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop("password_confirm")
         user = User.objects.create_user(**validated_data)
-        # Create user profile
-        UserProfile.objects.create(user=user)
         return user
 
 

@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     "drf_spectacular",
     "corsheaders",
-    "accounts",
+    'accounts.apps.AccountsConfig',
     "analysis",
 ]
 
