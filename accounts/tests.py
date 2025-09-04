@@ -25,7 +25,7 @@ class UserModelTest(TestCase):
     def test_user_profile_creation(self):
         """Test that user profile is created automatically."""
         # Profile should be created via signal or in views
-        profile = UserProfile.objects.create(user=self.user)
+        profile = self.user.userprofile
         self.assertEqual(profile.user, self.user)
         self.assertEqual(str(profile), "test@example.com - Profile")
 
@@ -109,7 +109,7 @@ class UserProfileTest(APITestCase):
         self.user = User.objects.create_user(
             username="testuser", email="test@example.com", password="testpass123"
         )
-        self.profile = UserProfile.objects.create(user=self.user)
+        self.profile = self.user.userprofile
         self.client.force_authenticate(user=self.user)
         self.profile_url = reverse("accounts:profile")
         self.profile_details_url = reverse("accounts:profile-details")
