@@ -39,24 +39,24 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'django.contrib.sites',  
-    'django_filters',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',   
-    'allauth.socialaccount.providers.facebook',
-    'allauth.mfa',
-    'django_otp',
-    'django_otp.plugins.otp_totp',
-    'dj_rest_auth',
-    'dj_rest_auth.registration',
+    "django.contrib.sites",
+    "django_filters",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.facebook",
+    "allauth.mfa",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
     "rest_framework",
     "rest_framework_simplejwt",
-    'rest_framework.authtoken',
+    "rest_framework.authtoken",
     "drf_spectacular",
     "corsheaders",
-    'accounts.apps.AccountsConfig',
+    "accounts.apps.AccountsConfig",
     "analysis",
 ]
 
@@ -69,8 +69,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
-    'django_otp.middleware.OTPMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
+    "django_otp.middleware.OTPMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "larvixon_site.urls"
@@ -128,22 +128,22 @@ AUTH_PASSWORD_VALIDATORS = [
 # Social authentication settings
 SITE_ID = 1
 AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 )
 
 SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'APP': {
-            'client_id': config('GOOGLE_CLIENT_ID', default=''),
-            'secret': config('GOOGLE_SECRET', default=''),
-            'key': ''
+    "google": {
+        "APP": {
+            "client_id": config("GOOGLE_CLIENT_ID", default=""),
+            "secret": config("GOOGLE_SECRET", default=""),
+            "key": "",
         }
     }
 }
 
 # 2FA settings
-ACCOUNT_MFA_MANDATORY = True 
+ACCOUNT_MFA_MANDATORY = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -168,11 +168,11 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_AUTH = {
-    'USE_JWT': True,
-    'JWT_AUTH_COOKIE': 'my-app-auth',
-    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
-    'JWT_AUTH_REFRESH_COOKIE': 'my-refresh-token', 
-    'JWT_AUTH_REFRESH_TOKEN_LIFETIME': timedelta(days=7), 
+    "USE_JWT": True,
+    "JWT_AUTH_COOKIE": "my-app-auth",
+    "JWT_AUTH_HEADER_PREFIX": "Bearer",
+    "JWT_AUTH_REFRESH_COOKIE": "my-refresh-token",
+    "JWT_AUTH_REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
 # Django REST Framework settings
@@ -186,9 +186,7 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend'
-    ],
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
@@ -200,9 +198,7 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": "/api/",
-    'EXTENSIONS': [
-        'drf_spectacular.extensions.DjangoFilterExtension'
-    ],
+    "EXTENSIONS": ["drf_spectacular.extensions.DjangoFilterExtension"],
 }
 
 # JWT settings
@@ -218,6 +214,8 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:34439",
+    "http://127.0.0.1:34439",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
