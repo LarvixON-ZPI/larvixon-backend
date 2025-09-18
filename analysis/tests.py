@@ -30,7 +30,7 @@ class VideoAnalysisTest(APITestCase):
     def test_get_analysis_list(self):
         response = self.client.get(self.analysis_list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['results']), 2)
 
     def test_create_analysis(self):
         payload = {
