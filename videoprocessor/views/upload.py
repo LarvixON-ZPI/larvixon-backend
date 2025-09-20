@@ -6,6 +6,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import permissions
 from drf_spectacular.utils import extend_schema
 from analysis.models import VideoAnalysis
+from ..tasks import process_video_task
 
 class VideoUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -44,7 +45,7 @@ class VideoUploadView(APIView):
         except Exception as e:
             return Response({"error": f"Failed to save file: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # maybe here we should trigger the ML model processing?
+        process_video_task(analysis.id)
 
         return Response({
             "message": "Video uploaded and saved successfully and analysis created.",
