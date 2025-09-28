@@ -39,7 +39,7 @@ class UserLoginSerializer(serializers.Serializer):
         password = attrs.get("password")
 
         if email and password:
-            user = authenticate(username=email, password=password)
+            user = authenticate(email=email, password=password)
             if not user:
                 raise serializers.ValidationError("Invalid email or password.")
             if not user.is_active:
@@ -107,5 +107,10 @@ class MFALoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
     mfa_code = serializers.CharField(write_only=True, required=False)
 
+
 class MFAVerifySerializer(serializers.Serializer):
-    code = serializers.CharField(max_length=6, required=True, help_text="The 6-digit MFA code from the authenticator app.")
+    code = serializers.CharField(
+        max_length=6,
+        required=True,
+        help_text="The 6-digit MFA code from the authenticator app.",
+    )

@@ -3,15 +3,20 @@ from rest_framework import generics, status, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+
 # Drf Spectacular imports
 from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
+
 # Dj-rest-auth imports
 from dj_rest_auth.registration.views import SocialLoginView
+
 # Allauth social account imports
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+
 # Allauth MFA imports
 from allauth.mfa.utils import is_mfa_enabled
+
 # App's local imports
 from ..models import User
 from ..serializers import (
@@ -55,6 +60,7 @@ class UserRegistrationView(generics.CreateAPIView):
             status=status.HTTP_201_CREATED,
         )
 
+
 @extend_schema(
     summary="User login with optional 2FA",
     description="Authenticate user with email/password. If 2FA is enabled, a second-factor code must be provided.",
@@ -78,15 +84,13 @@ class UserLoginView(APIView):
             mfa_code = request.data.get("mfa_code")
             if not mfa_code:
                 return Response(
-                    {"detail": "MFA is required."},
-                    status=status.HTTP_202_ACCEPTED
+                    {"detail": "MFA is required."}, status=status.HTTP_202_ACCEPTED
                 )
 
             is_valid, error_message, _ = verify_mfa_code(user, mfa_code)
             if not is_valid:
                 return Response(
-                    {"detail": error_message},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"detail": error_message}, status=status.HTTP_400_BAD_REQUEST
                 )
 
         # If MFA is not enabled or the code was valid, issue tokens
@@ -101,6 +105,7 @@ class UserLoginView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
 
 class UserLogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -122,6 +127,7 @@ class UserLogoutView(APIView):
                 {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
             )
 
+
 class SocialLoginJWTViewMixin:
     def post(self, request, *args, **kwargs):
         # Authenticate the user with the social provider (Google, Facebook, etc.)
@@ -135,35 +141,35 @@ class SocialLoginJWTViewMixin:
                 mfa_code = request.data.get("mfa_code")
                 if not mfa_code:
                     return Response(
-                        {"detail": "MFA is required."},
-                        status=status.HTTP_202_ACCEPTED
+                        {"detail": "MFA is required."}, status=status.HTTP_202_ACCEPTED
                     )
-                
+
                 is_valid, error_message, _ = verify_mfa_code(user, mfa_code)
                 if not is_valid:
                     return Response(
-                        {"detail": error_message},
-                        status=status.HTTP_400_BAD_REQUEST
+                        {"detail": error_message}, status=status.HTTP_400_BAD_REQUEST
                     )
-            
+
             # If no MFA is enabled or the MFA code was valid, issue tokens
             refresh = RefreshToken.for_user(user)
             access = str(refresh.access_token)
-            
+
             user_data = UserSerializer(user).data
 
-            return Response({
-                'user': user_data,
-                'access': access,
-                'refresh': str(refresh),
-                'message': "Social login successful"
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "user": user_data,
+                    "access": access,
+                    "refresh": str(refresh),
+                    "message": "Social login successful",
+                },
+                status=status.HTTP_200_OK,
+            )
         else:
             return Response(
-                {"error": "Social login failed. Authentication was not successful."}, 
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "Social login failed. Authentication was not successful."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-
 
 
 @extend_schema(
@@ -173,26 +179,23 @@ class SocialLoginJWTViewMixin:
         name="GoogleLoginRequest",
         fields={
             "access_token": serializers.CharField(
-                help_text="Google OAuth2 access token.",
-                required=False
+                help_text="Google OAuth2 access token.", required=False
             ),
             "code": serializers.CharField(
-                help_text="Google OAuth2 authorization code.",
-                required=False
+                help_text="Google OAuth2 authorization code.", required=False
             ),
             "id_token": serializers.CharField(
-                help_text="Google OAuth2 ID token.",
-                required=False
+                help_text="Google OAuth2 ID token.", required=False
             ),
             "mfa_code": serializers.CharField(
-                help_text="2FA code required for MFA-enabled accounts.",
-                required=False
+                help_text="2FA code required for MFA-enabled accounts.", required=False
             ),
-        }
-    )
+        },
+    ),
 )
 class GoogleLogin(SocialLoginJWTViewMixin, SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
+
 
 @extend_schema(
     summary="Facebook social authentication idk if this works",

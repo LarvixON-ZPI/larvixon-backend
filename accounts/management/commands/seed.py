@@ -9,7 +9,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options) -> None:
         UserModel = cast(type[User], get_user_model())
-        email = "a@b.c"
+        email = "a@b.cd"
         password = "1"
         if not UserModel.objects.filter(email=email).exists():
             user: User = UserModel.objects.create_user(
