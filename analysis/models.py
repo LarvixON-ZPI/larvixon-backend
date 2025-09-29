@@ -20,6 +20,7 @@ class VideoAnalysis(models.Model):
     user: models.ForeignKey[User, User] = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="analyses"
     )
+    title: models.CharField = models.CharField(max_length=255, blank=True)
     video_name: models.CharField = models.CharField(max_length=255)
     video_file_path: models.CharField = models.CharField(max_length=500)
     status: models.CharField = models.CharField(
