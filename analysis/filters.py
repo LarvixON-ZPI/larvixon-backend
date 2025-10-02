@@ -7,6 +7,6 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         fields = {
             'status': ['exact'],
             'actual_substance': ['exact', 'icontains'],
-            # # Note: change confidence_scores to a numeric type in the model for this to work
+            # # TODO: change confidence_scores to a numeric type in the model for this to work
             # 'confidence_scores': ['gt', 'lt', 'gte', 'lte'], 
         }

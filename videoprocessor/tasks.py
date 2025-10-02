@@ -1,21 +1,6 @@
 import os
-from analysis.models import VideoAnalysis
+from analysis.models import Substance, VideoAnalysis
 from .mock_ml_predict import mock_ml_predict
-
-CONFIDENECE_THRESHOLD = 0.8
-
-def get_top_prediction(scores):
-    """
-    Helper function to get the top prediction from a dictionary of scores.
-    """
-    if not scores: 
-        return {}
-
-    top_substance = max(scores, key=scores.get)
-    
-    if scores[top_substance] < CONFIDENECE_THRESHOLD:
-        return {"predicted_substance": "unknown"}
-    return {"predicted_substance": top_substance}
 
 def get_sorted_predictions(scores):
     """
@@ -45,8 +30,12 @@ def process_video_task(analysis_id: int):
         if not mock_results_with_confidence:
             analysis.status = "failed"
         else:
-            analysis.results = get_top_prediction(mock_results_with_confidence)
-            analysis.confidence_scores = get_sorted_predictions(mock_results_with_confidence)
+            for substance_name, score in get_sorted_predictions(mock_results_with_confidence):
+                detected_substance = Substance.objects.get(name_en=substance_name)
+                analysis.analysis_results.create(
+                    substance=detected_substance,
+                    confidence_score=score
+                )
             analysis.status = "completed"
             
         analysis.save()
