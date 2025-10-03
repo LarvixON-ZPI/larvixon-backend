@@ -1,6 +1,6 @@
 import random
 
-MOCK_CLASS_NAMES = ["cocaine", "morphine", "ethanol", "heroin", "marijuana", "amphetamine"]
+MOCK_CLASS_NAMES = ["cocaine", "morphine", "ethanol", "ketamine", "morphine", "tetrodotoxin"]
 
 def mock_ml_predict(video_path: str) -> dict:
     """
