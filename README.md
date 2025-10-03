@@ -54,6 +54,7 @@ python manage.py createsuperuser
 
 # Seed database
 python manage.py seed
+python manage.py seed_substances
 ```
 
 #### Configuring Social Authentication
