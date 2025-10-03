@@ -44,8 +44,9 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "user", "created_at", "completed_at", "analysis_results", "video_name")
 
+
 class VideoAnalysisIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = VideoAnalysis
-        fields = ['id']
-        read_only_fields = ('id',)
+        fields = ["id"]
+        read_only_fields = ("id",)
