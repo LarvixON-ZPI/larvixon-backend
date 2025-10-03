@@ -26,6 +26,8 @@ class VideoUploadView(APIView):
     def post(self, request: Request, *args, **kwargs):
         video_file = request.FILES.get("video")
         title = request.data.get("title")
+        if(title is None) or (title.strip() == ""):
+            title = "Untitled"
 
         if not video_file:
             return Response(
