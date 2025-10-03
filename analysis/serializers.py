@@ -14,7 +14,6 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "user",
-            "title",
             "video_name",
             "status",
             "created_at",
