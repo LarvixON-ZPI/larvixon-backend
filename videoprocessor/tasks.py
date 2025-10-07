@@ -1,6 +1,6 @@
 import os
 from analysis.models import Substance, VideoAnalysis
-from .mock_ml_predict import mock_ml_predict
+from .send_video_to_ml import send_video_to_ml
 
 def get_sorted_predictions(scores):
     """
@@ -25,7 +25,7 @@ def process_video_task(analysis_id: int):
         analysis.save()
 
         print(f"Processing video at {video_path} for analysis ID {analysis_id}")
-        mock_results_with_confidence = mock_ml_predict(video_path)
+        mock_results_with_confidence = send_video_to_ml(video_path) # or mock_ml_predict(video_path)
         
         if not mock_results_with_confidence:
             analysis.status = "failed"
