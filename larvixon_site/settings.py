@@ -101,7 +101,7 @@ WSGI_APPLICATION = "larvixon_site.wsgi.application"
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL')
+        default=config('DATABASE_URL', default='sqlite:///db.sqlite3') # default to sqlite if no DATABASE_URL is provided
     )
 }
 

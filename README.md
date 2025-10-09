@@ -89,6 +89,8 @@ For Google Login create .env
 ```bash
 GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID"
 GOOGLE_SECRET="YOUR_GOOGLE_SECRET_KEY"
+
+DATABASE_URL=postgres://larvixon_user:localpassword@localhost:5433/larvixon_local_db
 ```
 
 And fill it with your own keys from <https://console.cloud.google.com>
