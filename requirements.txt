@@ -5,6 +5,7 @@ cffi==1.17.1
 charset-normalizer==3.4.2
 colorama==0.4.6
 cryptography==45.0.6
+dj-database-url==3.0.1
 dj-rest-auth==7.0.1
 Django==5.2.5
 django-allauth==65.11.1
