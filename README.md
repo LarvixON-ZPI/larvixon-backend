@@ -68,6 +68,12 @@ ALTER SCHEMA public OWNER TO larvixon_user;
 GRANT ALL ON SCHEMA public TO larvixon_user;
 ```
 
+example `.env` file:
+
+```bash
+DATABASE_URL=postgres://larvixon_user:localpassword@localhost:5433/larvixon_local_db
+```
+
 ### 2.3 Seed Database 
 
 ```bash
@@ -84,13 +90,11 @@ python manage.py seed_substances
 
 #### Configuring Social Authentication
 
-For Google Login create .env
+For Google Login add in `.env`
 
 ```bash
 GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID"
 GOOGLE_SECRET="YOUR_GOOGLE_SECRET_KEY"
-
-DATABASE_URL=postgres://larvixon_user:localpassword@localhost:5433/larvixon_local_db
 ```
 
 And fill it with your own keys from <https://console.cloud.google.com>
