@@ -99,26 +99,10 @@ WSGI_APPLICATION = "larvixon_site.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "data" / "db.sqlite3",
-#         "TEST": {
-#             "NAME": BASE_DIR / "test_db.sqlite3",
-#         },
-#     }
-# }
-
-
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "larvixon_local_db",
-        "USER": "larvixon_user",
-        "PASSWORD": "localpassword",
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL')
+    )
 }
 
 

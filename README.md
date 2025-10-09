@@ -53,17 +53,19 @@ Install PostgreSQL using your system's package manager (e.g., Homebrew, EDB Inst
 
 #### 2.2 Create the Database and User
 
-You need to create a database and a user that matches the configuration in `settings.py`. Access your PostgreSQL command line (`psql`) and run these commands, replacing the credentials with the values used in `settings.py`:
+You need to create a database and a user that matches the configuration in `settings.py`. Access your PostgreSQL command line (`psql`) and run these commands, replacing the credentials with the values used in `.env`:
 
 ```sql
--- Connect to the default server (or use a GUI tool like pgAdmin)
--- On Linux/macOS, this might be: sudo -u postgres psql
-
 CREATE DATABASE larvixon_local_db;
 
 CREATE USER larvixon_user WITH PASSWORD 'localpassword';
 
 GRANT ALL PRIVILEGES ON DATABASE larvixon_local_db TO larvixon_user;
+
+-- It might be necessary to set the user as the owner of the default public schema 
+\c larvixon_local_db;
+ALTER SCHEMA public OWNER TO larvixon_user;
+GRANT ALL ON SCHEMA public TO larvixon_user;
 ```
 
 ### 2.3 Seed Database 
