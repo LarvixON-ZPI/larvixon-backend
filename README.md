@@ -43,7 +43,30 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Database Setup
+### 2. Local DB Setup 
+
+This project uses **PostgreSQL** for its database. To run the application locally, you must first set up a PostgreSQL server on your machine.
+
+#### 2.1 Install and Start PostgreSQL
+
+Install PostgreSQL using your system's package manager (e.g., Homebrew, EDB Installer). Ensure the server is running on the default port (`5432`).
+
+#### 2.2 Create the Database and User
+
+You need to create a database and a user that matches the configuration in `settings.py`. Access your PostgreSQL command line (`psql`) and run these commands, replacing the credentials with the values used in `settings.py`:
+
+```sql
+-- Connect to the default server (or use a GUI tool like pgAdmin)
+-- On Linux/macOS, this might be: sudo -u postgres psql
+
+CREATE DATABASE larvixon_local_db;
+
+CREATE USER larvixon_user WITH PASSWORD 'localpassword';
+
+GRANT ALL PRIVILEGES ON DATABASE larvixon_local_db TO larvixon_user;
+```
+
+### 2.3 Seed Database 
 
 ```bash
 # Run migrations
