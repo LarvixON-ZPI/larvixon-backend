@@ -12,6 +12,7 @@ django-allauth==65.11.1
 django-cors-headers==4.7.0
 django-filter==25.1
 django-otp==1.6.1
+django-phonenumber-field==8.3.0
 django-stubs==5.2.2
 django-stubs-ext==5.2.2
 djangorestframework==3.16.1
@@ -23,6 +24,7 @@ idna==3.10
 inflection==0.5.1
 jsonschema==4.25.0
 jsonschema-specifications==2025.4.1
+phonenumbers==9.0.16
 pillow==11.3.0
 psycopg2-binary==2.9.10
 pycparser==2.22

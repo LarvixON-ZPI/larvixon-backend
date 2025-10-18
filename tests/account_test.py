@@ -132,7 +132,7 @@ class TestUserProfile(APITestCase):
         update_data = {
             "bio": "Test user bio for unittest",
             "organization": "Test Organization",
-            "phone_number": "+1234567890",
+            "phone_number": "+48234567890",
         }
 
         response = self.make_request("PATCH", "/accounts/profile/details/", update_data)

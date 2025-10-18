@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import UserManager
+from phonenumber_field.modelfields import PhoneNumberField
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -42,7 +43,7 @@ class UserProfile(models.Model):
         User, on_delete=models.CASCADE, related_name="profile"
     )
     bio: models.TextField = models.TextField(max_length=500, blank=True)
-    phone_number: models.CharField = models.CharField(max_length=20, blank=True)
+    phone_number: models.CharField = PhoneNumberField(blank=True)
     organization: models.CharField = models.CharField(max_length=255, blank=True)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
