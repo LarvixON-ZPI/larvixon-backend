@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from .models import User, UserProfile
-
+from phonenumber_field.serializerfields import PhoneNumberField
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
@@ -52,6 +52,8 @@ class UserLoginSerializer(serializers.Serializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    phone_number = PhoneNumberField(allow_blank=True)
+
     class Meta:  # type: ignore
         model = UserProfile
         fields = ("bio", "phone_number", "organization", "created_at", "updated_at")

@@ -135,7 +135,7 @@ class UserProfileTest(APITestCase):
         payload = {
             "bio": "Updated bio",
             "organization": "Test Org",
-            "phone_number": "+1234567890",
+            "phone_number": "+48234567890",
         }
         response = self.client.patch(self.profile_details_url, payload)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
