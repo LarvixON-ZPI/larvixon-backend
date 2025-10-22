@@ -45,6 +45,10 @@ class VideoUploadView(APIView):
                 video_file_path=fs.path(filename),
                 status="pending",
             )
+            if(request.user.is_new_user):
+                request.user.is_new_user = False
+                request.user.save()
+
         except Exception as e:
             return Response(
                 {"error": f"Failed to save file: {e}"},
