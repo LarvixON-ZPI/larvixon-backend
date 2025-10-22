@@ -22,6 +22,7 @@ class User(AbstractUser):
     last_name: models.CharField = models.CharField(max_length=150, blank=True)
     date_joined: models.DateTimeField = models.DateTimeField(default=timezone.now)
     is_active: models.BooleanField = models.BooleanField(default=True)
+    is_new_user: models.BooleanField = models.BooleanField(default=True)
 
     # Use email as the unique identifier for authentication
     USERNAME_FIELD = "email"

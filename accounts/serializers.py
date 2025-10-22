@@ -17,6 +17,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             "password_confirm",
             "first_name",
             "last_name",
+            "is_new_user",
         )
 
     def validate(self, attrs):
@@ -72,6 +73,7 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "date_joined",
+            "is_new_user",
             "profile",
         )
         read_only_fields = ("id", "username", "date_joined")
