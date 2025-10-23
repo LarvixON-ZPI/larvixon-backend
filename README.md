@@ -1,6 +1,8 @@
-# Larvixon Backend
+<!-- markdownlint-disable MD041 -->
 
 [![Django CI](https://github.com/LarvixON-ZPI/larvixon-backend/actions/workflows/django.yml/badge.svg)](https://github.com/LarvixON-ZPI/larvixon-backend/actions/workflows/django.yml)
+
+# Larvixon Backend
 
 REST API backend for the Larvixon larval behavior analysis system. Built with Django REST Framework and includes comprehensive user account management and video analysis tracking.
 
