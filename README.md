@@ -62,6 +62,8 @@ CREATE USER larvixon_user WITH PASSWORD 'localpassword';
 
 GRANT ALL PRIVILEGES ON DATABASE larvixon_local_db TO larvixon_user;
 
+ALTER ROLE larvixon_user CREATEDB;
+
 -- It might be necessary to set the user as the owner of the default public schema 
 \c larvixon_local_db;
 ALTER SCHEMA public OWNER TO larvixon_user;
