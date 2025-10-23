@@ -6,6 +6,17 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies
 COPY requirements.txt /app/
 RUN pip install --upgrade pip && pip install -r requirements.txt
@@ -15,5 +26,5 @@ COPY . /app
 
 EXPOSE 8000
 
-# Run migrations (SQLite is file-based, no waiting needed)
+# Run migrations
 CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn larvixon_site.wsgi:application --bind 0.0.0.0:8000"]

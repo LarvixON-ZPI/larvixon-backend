@@ -43,17 +43,31 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Local DB Setup 
+### 2. Local DB Setup
 
-This project uses **PostgreSQL** for its database. To run the application locally, you must first set up a PostgreSQL server on your machine.
+This project uses **PostgreSQL** for its database. You have two options:
 
-#### 2.1 Install and Start PostgreSQL
+#### Option A: Using Docker (Recommended - See Section 3)
+
+Skip to section 3 to run both the application and PostgreSQL using Docker. This is the easiest way to get started.
+
+#### Option B: Manual PostgreSQL Setup
+
+If you prefer to run PostgreSQL locally without Docker, follow these steps:
+
+##### 2.1 Install and Start PostgreSQL
 
 Install PostgreSQL using your system's package manager (e.g., Homebrew, EDB Installer). Ensure the server is running on the default port (`5432`).
 
-#### 2.2 Create the Database and User
+##### 2.2 Create the Database and User
 
-You need to create a database and a user that matches the configuration in `settings.py`. Access your PostgreSQL command line (`psql`) and run these commands, replacing the credentials with the values used in `.env`:
+Create a `.env` file in the project root:
+
+```bash
+cp .env.example .env
+```
+
+Then access your PostgreSQL command line (`psql`) and run these commands, replacing the credentials with the values from your `.env` file:
 
 ```sql
 CREATE DATABASE larvixon_local_db;
@@ -76,7 +90,7 @@ example `.env` file:
 DATABASE_URL=postgres://larvixon_user:localpassword@localhost:5433/larvixon_local_db
 ```
 
-### 2.3 Seed Database 
+### 2.3 Seed Database
 
 ```bash
 # Run migrations
@@ -102,6 +116,30 @@ GOOGLE_SECRET="YOUR_GOOGLE_SECRET_KEY"
 And fill it with your own keys from <https://console.cloud.google.com>
 
 ### 3. Run Server
+
+#### Option A: Using Docker (Recommended)
+
+The easiest way to run the application with PostgreSQL is using Docker:
+
+```bash
+cp .env.example .env
+```
+
+Edit .env and update the values if needed
+
+```bash
+docker-compose up -d
+
+# The application will automatically run migrations
+# To create a superuser and seed the database:
+docker-compose exec web python manage.py createsuperuser
+docker-compose exec web python manage.py seed
+docker-compose exec web python manage.py seed_substances
+```
+
+The server will start at `http://127.0.0.1:8000`
+
+#### Option B: Local Development (Without Docker)
 
 ```bash
 python manage.py runserver

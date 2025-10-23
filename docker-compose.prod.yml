@@ -1,0 +1,22 @@
+services:
+  web:
+    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn larvixon_site.wsgi:application --bind 0.0.0.0:8000 --workers 4"
+    environment:
+      - DEBUG=False
+    volumes:
+      # Remove source code mount for production
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+
+  nginx:
+    image: nginx:alpine
+    container_name: larvixon_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+    depends_on:
+      - web

@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: larvixon_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-larvixon_db}
+      POSTGRES_USER: ${POSTGRES_USER:-larvixon_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-larvixon_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-larvixon_user} -d ${POSTGRES_DB:-larvixon_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: larvixon_backend
+    restart: unless-stopped
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-larvixon_user}:${POSTGRES_PASSWORD:-larvixon_password}@db:5432/${POSTGRES_DB:-larvixon_db}
+      - DEBUG=${DEBUG:-True}
+      - SECRET_KEY=${SECRET_KEY:-changeme-insecure}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_SECRET=${GOOGLE_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
