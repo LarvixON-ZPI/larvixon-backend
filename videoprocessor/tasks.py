@@ -39,8 +39,6 @@ def process_video_task(analysis_id: int):
             analysis.status = "completed"
             
         analysis.save()
-
-        os.remove(video_path)
         
     except VideoAnalysis.DoesNotExist:
         print(f"VideoAnalysis with ID {analysis_id} not found.")

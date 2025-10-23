@@ -34,6 +34,17 @@ class User(AbstractUser):
     def __str__(self) -> str:
         return self.email
 
+    def unmark_new_user(self) -> bool:
+        """
+        Marks the user as an existing user by setting is_new_user to False.
+        Saves the change to the database efficiently.
+        Returns True if the status was changed, False otherwise.
+        """
+        if self.is_new_user:
+            self.is_new_user = False
+            self.save(update_fields=['is_new_user'])
+            return True
+        return False
 
 class UserProfile(models.Model):
     """

@@ -2,56 +2,63 @@ import threading
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.core.files.storage import FileSystemStorage
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import permissions
+from rest_framework.request import Request
+from django.db import transaction
 from drf_spectacular.utils import extend_schema
+
 from analysis.models import VideoAnalysis
 from ..tasks import process_video_task
-from rest_framework.request import Request
-
+from ..video_file_manager import VideoFileManager
 
 class VideoUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [permissions.IsAuthenticated]
 
+    _video_manager = VideoFileManager()
+
     @extend_schema(
         request={
             "multipart/form-data": {
                 "type": "object",
-                "properties": {"video": {"type": "string", "format": "binary"}},
+                "properties": {"video": {"type": "string", "format": "binary"}, "title": {"type": "string"}},
             }
         },
     )
     def post(self, request: Request, *args, **kwargs):
         video_file = request.FILES.get("video")
         title = request.data.get("title")
-        if(title is None) or (title.strip() == ""):
-            title = "Untitled"
 
         if not video_file:
             return Response(
-                {"error": "No video file provided."}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "No video file provided."}, 
+                status=status.HTTP_400_BAD_REQUEST
             )
 
-        fs = FileSystemStorage()
+        title = title.strip() if title else "Untitled"
 
         try:
-            filename = fs.save(video_file.name, video_file)
-            analysis = VideoAnalysis.objects.create(
-                user=request.user,
-                title=title,
-                video_name=filename,
-                video_file_path=fs.path(filename),
-                status="pending",
-            )
-            if(request.user.is_new_user):
-                request.user.is_new_user = False
-                request.user.save()
+            video_filename, video_path = self._video_manager.save_video_file(video_file)
 
-        except Exception as e:
+            thumbnail_filename, thumbnail_path = self._video_manager.extract_and_save_first_frame(video_path, video_filename)
+
+            with transaction.atomic():
+                analysis = VideoAnalysis.objects.create(
+                    user=request.user,
+                    title=title,
+                    video_name=video_filename,
+                    video_file_path=video_path,
+                    thumbnail_name=thumbnail_filename,
+                    thumbnail_path=thumbnail_path,
+                    status="pending",
+                )
+                
+            request.user.unmark_new_user()
+
+        except (IOError, Exception) as e:
             return Response(
-                {"error": f"Failed to save file: {e}"},
+                {"error": f"Failed to process upload or save record: {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -59,10 +66,10 @@ class VideoUploadView(APIView):
 
         return Response(
             {
-                "message": "Video uploaded and saved successfully and analysis created.",
-                "filename": filename,
-                "file_path": analysis.video_file_path,
+                "message": "Video uploaded, thumbnail created, and analysis initiated.",
                 "analysis_id": analysis.id,
+                "video_path": video_path,
+                "thumbnail_path": thumbnail_path,
             },
             status=status.HTTP_201_CREATED,
         )

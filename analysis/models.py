@@ -23,6 +23,8 @@ class VideoAnalysis(models.Model):
     )
     video_name: models.CharField = models.CharField(max_length=255)
     video_file_path: models.CharField = models.CharField(max_length=500)
+    thumbnail_path: models.CharField = models.CharField(max_length=500, blank=True, null=True)
+    thumbnail_name: models.CharField = models.CharField(max_length=255, blank=True, null=True)
     status: models.CharField = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="pending"
     )
