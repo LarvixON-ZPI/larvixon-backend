@@ -1,7 +1,7 @@
 services:
   backend:
     # Development command with hot-reload
-    command: sh -c "python manage.py migrate --noinput && gunicorn --reload --bind 0.0.0.0:8000 larvixon_site.wsgi:application"
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
     # Development volumes: mount source code for hot-reload
     volumes:
       - .:/app

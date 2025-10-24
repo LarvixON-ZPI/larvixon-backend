@@ -24,6 +24,9 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Copy project
 COPY . /app
 
+# Create directories for static and media files
+RUN mkdir -p /app/staticfiles /app/media
+
 EXPOSE 8000
 
 # Run migrations
