@@ -54,10 +54,11 @@ class UserLoginSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     phone_number = PhoneNumberField(allow_blank=True)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:  # type: ignore
         model = UserProfile
-        fields = ("bio", "phone_number", "organization", "created_at", "updated_at")
+        fields = ("profile_picture", "bio", "phone_number", "organization", "created_at", "updated_at")
         read_only_fields = ("created_at", "updated_at")
 
 

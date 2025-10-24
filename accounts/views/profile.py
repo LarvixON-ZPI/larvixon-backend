@@ -1,9 +1,9 @@
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-# Drf Spectacular imports
+from rest_framework.parsers import MultiPartParser, FormParser
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-# App's local imports
+from django.db import transaction
 from ..models import User, UserProfile
 from analysis.models import VideoAnalysis
 from ..serializers import (
@@ -26,6 +26,8 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    parser_classes = (MultiPartParser, FormParser)
+
     def get_object(self):
         profile, created = UserProfile.objects.get_or_create(user=self.request.user)
         return profile
@@ -35,6 +37,7 @@ class UserProfileStats(generics.RetrieveAPIView):
     serializer_class = UserStatsSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @transaction.atomic
     def get_object(self):
         user = self.request.user
         analyses = VideoAnalysis.objects.filter(user=user)
