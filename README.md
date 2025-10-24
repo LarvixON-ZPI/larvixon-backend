@@ -132,13 +132,14 @@ Edit .env and update the values if needed
 ##### Development mode
 
 ```bash
+# Start with hot-reload and source code mounted
 docker-compose up -d
 
 # The application will automatically run migrations
 # To create a superuser and seed the database:
-docker-compose exec web python manage.py createsuperuser
-docker-compose exec web python manage.py seed
-docker-compose exec web python manage.py seed_substances
+docker-compose exec backend python manage.py createsuperuser
+docker-compose exec backend python manage.py seed
+docker-compose exec backend python manage.py seed_substances
 ```
 
 The server will start at `http://127.0.0.1:8000`
@@ -146,13 +147,14 @@ The server will start at `http://127.0.0.1:8000`
 ##### Production mode
 
 ```bash
+# Deploy with production settings (no source code mount, optimized for performance)
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 # The application will automatically run migrations
 # To create a superuser and seed the database:
-docker-compose exec web python manage.py createsuperuser
-docker-compose exec web python manage.py seed
-docker-compose exec web python manage.py seed_substances
+docker-compose exec backend python manage.py createsuperuser
+docker-compose exec backend python manage.py seed
+docker-compose exec backend python manage.py seed_substances
 ```
 
 You should then make requests to:
