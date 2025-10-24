@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: larvixon_postgres
+    container_name: postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-larvixon_db}
@@ -21,9 +21,9 @@ services:
       timeout: 5s
       retries: 5
 
-  web:
+  backend:
     build: .
-    container_name: larvixon_backend
+    container_name: backend
     restart: unless-stopped
     command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
     volumes:

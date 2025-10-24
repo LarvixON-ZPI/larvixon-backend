@@ -119,7 +119,7 @@ And fill it with your own keys from <https://console.cloud.google.com>
 
 ### 3. Run Server
 
-#### Option A: Using Docker (Recommended)
+#### Option A: Using Docker
 
 The easiest way to run the application with PostgreSQL is using Docker:
 
@@ -128,6 +128,8 @@ cp .env.example .env
 ```
 
 Edit .env and update the values if needed
+
+##### Development mode
 
 ```bash
 docker-compose up -d
@@ -141,7 +143,25 @@ docker-compose exec web python manage.py seed_substances
 
 The server will start at `http://127.0.0.1:8000`
 
-#### Option B: Local Development (Without Docker)
+##### Production mode
+
+```bash
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# The application will automatically run migrations
+# To create a superuser and seed the database:
+docker-compose exec web python manage.py createsuperuser
+docker-compose exec web python manage.py seed
+docker-compose exec web python manage.py seed_substances
+```
+
+You should then make requests to:
+nginx: <http://localhost:8080/>
+
+Direct backend access: <http://localhost:8000/>
+Useful for testing/debugging
+
+#### Option B: Local Development
 
 ```bash
 python manage.py runserver
