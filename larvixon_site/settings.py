@@ -100,8 +100,10 @@ WSGI_APPLICATION = "larvixon_site.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL', default='sqlite:///db.sqlite3') # default to sqlite if no DATABASE_URL is provided
+    "default": dj_database_url.config(
+        default=config(
+            "DATABASE_URL", default="sqlite:///db.sqlite3"
+        )  # default to sqlite if no DATABASE_URL is provided
     )
 }
 
@@ -160,6 +162,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 
 # Media files (user-uploaded files)

@@ -1,0 +1,9 @@
+services:
+  backend:
+    # Development command with hot-reload
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    # Development volumes: mount source code for hot-reload
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
