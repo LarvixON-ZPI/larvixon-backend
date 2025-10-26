@@ -2,8 +2,7 @@ import requests
 import json
 import os
 from typing import Dict, Optional
-
-ML_ENDPOINT_URL = "http://127.0.0.1:8001/predict" # when ml model is running locally at uvicorn app:app --host=0.0.0.0 --port=8001
+from larvixon_site.settings import ML_ENDPOINT_URL
 
 def send_video_to_ml(video_path: str) -> Optional[Dict[str, float]]:
     """
