@@ -39,16 +39,16 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
             "user",
             "title",
             "status",
-            "video",
             "video_name",
             "video_url",
-            "thumbnail",
             "thumbnail_url",
             "created_at",
             "completed_at",
             "analysis_results",
             "actual_substance",
             "user_feedback",
+            "video",
+            "thumbnail",
         )
         read_only_fields = (
             "id",
