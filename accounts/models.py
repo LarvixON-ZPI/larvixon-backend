@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from warnings import deprecated
+import warnings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
@@ -15,8 +15,10 @@ if TYPE_CHECKING:
     from typing import Any, Dict, Optional, List, Tuple
 
 
-@deprecated("Use {user_picture_upload_to} instead")
 def user_profile_picture_path(instance, filename):
+    warnings.warn(
+        "Use user_picture_upload_to instead", DeprecationWarning, stacklevel=2
+    )
     return f"profile_pics/user_{instance.user.id}/{filename}"
 
 
