@@ -1,6 +1,9 @@
+import os
 from typing import List, Tuple
+import uuid
 from django.db import models
 from accounts.models import User
+from accounts.utils import user_thumbnail_upload_to, user_video_upload_to
 
 
 class VideoAnalysis(models.Model):
@@ -8,34 +11,44 @@ class VideoAnalysis(models.Model):
     Model to track user's video analysis history.
     """
 
-    STATUS_CHOICES: List[Tuple[str, str]] = [
-        ("pending", "Pending"),
-        ("processing", "Processing"),
-        ("completed", "Completed"),
-        ("failed", "Failed"),
-    ]
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PROCESSING = "processing", "Processing"
+        COMPLETED = "completed", "Completed"
+        FAILED = "failed", "Failed"
 
     id: models.BigAutoField = models.BigAutoField(primary_key=True)
-    title: models.CharField = models.CharField(max_length=255, default="Untitled") # consider making this field unique for the user?
+    title: models.CharField = models.CharField(
+        max_length=255, default="Untitled"
+    )  # consider making this field unique for the user?
 
     user: models.ForeignKey[User, User] = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="analyses"
     )
-    video_name: models.CharField = models.CharField(max_length=255)
-    video_file_path: models.CharField = models.CharField(max_length=500)
-    thumbnail_path: models.CharField = models.CharField(max_length=500, blank=True, null=True)
-    thumbnail_name: models.CharField = models.CharField(max_length=255, blank=True, null=True)
+    video = models.FileField(upload_to=user_video_upload_to)
+    thumbnail = models.ImageField(
+        upload_to=user_thumbnail_upload_to,
+        blank=True,
+        null=True,
+    )
     status: models.CharField = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="pending"
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
     )
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     completed_at: models.DateTimeField = models.DateTimeField(null=True, blank=True)
 
-    # User feedback for model improvement
     actual_substance: models.CharField = models.CharField(
         max_length=100, blank=True, null=True
     )
     user_feedback: models.TextField = models.TextField(blank=True)
+
+    def delete(self, *args, **kwargs):
+        if self.video:
+            self.video.delete(save=False)
+        if self.thumbnail:
+            self.thumbnail.delete(save=False)
 
     class Meta:
         ordering = ["-created_at"]
@@ -51,7 +64,9 @@ class Substance(models.Model):
 
     id: models.BigAutoField = models.BigAutoField(primary_key=True)
     name_en: models.CharField = models.CharField(max_length=100, unique=True)
-    name_pl: models.CharField = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    name_pl: models.CharField = models.CharField(
+        max_length=100, unique=True, null=True, blank=True
+    )
 
     def __str__(self) -> str:
         return self.name_en
