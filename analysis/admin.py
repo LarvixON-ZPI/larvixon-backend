@@ -19,3 +19,10 @@ class VideoAnalysisAdmin(admin.ModelAdmin):
         ("User Feedback", {"fields": ("actual_substance", "user_feedback")}),
         ("Timestamps", {"fields": ("created_at", "completed_at")}),
     )
+
+    def video_name(self, obj):
+        if obj.video:
+            return obj.video.name.split("/")[-1]
+        return "(no file)"
+
+    video_name.short_description = "Video Name"

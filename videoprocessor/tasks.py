@@ -1,6 +1,8 @@
 import os
 from analysis.models import Substance, VideoAnalysis
+from videoprocessor.mock_ml_predict import mock_ml_predict
 from .send_video_to_ml import send_video_to_ml
+
 
 def get_sorted_predictions(scores):
     """
@@ -8,10 +10,10 @@ def get_sorted_predictions(scores):
     """
     if not scores:
         return []
-
     sorted_predictions = sorted(scores.items(), key=lambda item: item[1], reverse=True)
-    
+
     return sorted_predictions
+
 
 def process_video_task(analysis_id: int):
     """
@@ -19,32 +21,34 @@ def process_video_task(analysis_id: int):
     """
     try:
         analysis = VideoAnalysis.objects.get(id=analysis_id)
-        video_path = analysis.video_file_path
-        
-        analysis.status = "processing"
+        video_path = analysis.video.path
+        analysis.status = VideoAnalysis.Status.PENDING
         analysis.save()
 
         print(f"Processing video at {video_path} for analysis ID {analysis_id}")
-        mock_results_with_confidence = send_video_to_ml(video_path) # or mock_ml_predict(video_path)
-        
-        if not mock_results_with_confidence:
-            analysis.status = "failed"
+        # TODO: Check on real model, mocked data works
+        results = send_video_to_ml(video_path)
+        # results = mock_ml_predict(video_path)
+
+        if not results:
+            analysis.status = VideoAnalysis.Status.FAILED
         else:
-            for substance_name, score in get_sorted_predictions(mock_results_with_confidence):
-                detected_substance = Substance.objects.get(name_en=substance_name)
-                analysis.analysis_results.create(
-                    substance=detected_substance,
-                    confidence_score=score
+            for substance_name, score in get_sorted_predictions(results):
+                detected_substance, _ = Substance.objects.get_or_create(
+                    name_en=substance_name
                 )
-            analysis.status = "completed"
-            
+                analysis.analysis_results.create(
+                    substance=detected_substance, confidence_score=score
+                )
+            analysis.status = VideoAnalysis.Status.COMPLETED
+
         analysis.save()
-        
+
     except VideoAnalysis.DoesNotExist:
         print(f"VideoAnalysis with ID {analysis_id} not found.")
-        
+
     except Exception as e:
-        if 'analysis' in locals():
-            analysis.status = "failed"
+        if "analysis" in locals():
+            analysis.status = VideoAnalysis.Status.FAILED
             analysis.save()
         print(f"An error occurred: {e}")
