@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
+import sys
 from decouple import config
 import dj_database_url
 import os
@@ -19,7 +20,7 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-ML_ENDPOINT_URL = "http://127.0.0.1:8001/predict" # when ml model is running locally at uvicorn app:app --host=0.0.0.0 --port=8001
+ML_ENDPOINT_URL = "http://127.0.0.1:8001/predict"  # when ml model is running locally at uvicorn app:app --host=0.0.0.0 --port=8001
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -244,3 +245,6 @@ CORS_ALLOWED_HEADERS = [
 
 # Custom user model
 AUTH_USER_MODEL = "accounts.User"
+
+if "test" in sys.argv:
+    MEDIA_ROOT = os.path.join(BASE_DIR, "test_media")
