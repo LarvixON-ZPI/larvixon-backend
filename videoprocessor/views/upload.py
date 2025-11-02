@@ -55,6 +55,9 @@ class VideoUploadView(APIView):
                 analysis.thumbnail.save(
                     thumbnail_filename, thumbnail_content, save=True
                 )
+
+                request.user.unmark_new_user()  # type: ignore
+
         except (IOError, Exception) as e:
             print(e)
             return Response(

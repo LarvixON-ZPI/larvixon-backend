@@ -19,10 +19,15 @@ def get_sorted_predictions(scores):
 
 def process_video_task(analysis_id: int):
     """
-    Uses a mock ML model that takes a full video and updates the database.
+    Send the video to the ML model for processing. Update the database when done.
     """
     try:
         analysis = VideoAnalysis.objects.get(id=analysis_id)
+    except VideoAnalysis.DoesNotExist:
+        print(f"VideoAnalysis with ID {analysis_id} not found.")
+        return
+
+    try:
         analysis.status = VideoAnalysis.Status.PENDING
         analysis.save()
 
@@ -48,9 +53,6 @@ def process_video_task(analysis_id: int):
             analysis.status = VideoAnalysis.Status.COMPLETED
 
         analysis.save()
-
-    except VideoAnalysis.DoesNotExist:
-        print(f"VideoAnalysis with ID {analysis_id} not found.")
 
     except Exception as e:
         if "analysis" in locals():

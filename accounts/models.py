@@ -86,7 +86,7 @@ class UserProfile(models.Model):
 
     def save(self, *args, **kwargs):
         try:
-            this = UserProfile.objects.get(id=self.id)
+            this = UserProfile.objects.get(id=self.id)  # type: ignore
             if this.profile_picture != self.profile_picture:
                 if this.profile_picture and os.path.exists(this.profile_picture.path):
                     this.profile_picture.delete(save=False)
@@ -98,4 +98,4 @@ class UserProfile(models.Model):
     def delete(self, *args, **kwargs):
         if self.profile_picture:
             self.profile_picture.delete(save=False)
-        super(UserProfile, self).delete(*args, **kwargs)
+        return super(UserProfile, self).delete(*args, **kwargs)

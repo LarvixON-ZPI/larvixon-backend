@@ -28,8 +28,7 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
     analysis_results: AnalysisResultSerializer = AnalysisResultSerializer(
         many=True, read_only=True
     )
-    thumbnail_url = serializers.SerializerMethodField()
-    video_url = serializers.SerializerMethodField()
+
     video_name = serializers.SerializerMethodField()
 
     class Meta:  # type: ignore
@@ -40,15 +39,13 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
             "title",
             "status",
             "video_name",
-            "video_url",
-            "thumbnail_url",
+            "video",
+            "thumbnail",
             "created_at",
             "completed_at",
             "analysis_results",
             "actual_substance",
             "user_feedback",
-            "video",
-            "thumbnail",
         )
         read_only_fields = (
             "id",
@@ -57,29 +54,9 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
             "completed_at",
             "analysis_results",
             "video_name",
-            "video_url",
-            "thumbnail_url",
+            "video",
+            "thumbnail",
         )
-
-    def get_video_url(self, obj):
-        if not obj.video:
-            return None
-        try:
-            url = obj.video.url
-        except ValueError:
-            return None
-        request = self.context.get("request")
-        return request.build_absolute_uri(url) if request else url
-
-    def get_thumbnail_url(self, obj):
-        if not obj.thumbnail:
-            return None
-        try:
-            url = obj.thumbnail.url
-        except ValueError:
-            return None
-        request = self.context.get("request")
-        return request.build_absolute_uri(url) if request else url
 
     def get_video_name(self, obj):
         if not obj.video:
@@ -88,7 +65,7 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
 
 
 class VideoAnalysisIdSerializer(serializers.ModelSerializer):
-    class Meta:
+    class Meta:  # type: ignore
         model = VideoAnalysis
         fields = ["id"]
         read_only_fields = ("id",)
