@@ -257,5 +257,11 @@ CORS_ALLOWED_HEADERS = [
 AUTH_USER_MODEL = "accounts.User"
 
 if "test" in sys.argv:
+    print("--- RUNNING IN TEST MODE ---")
+    print("--- Overriding default storage to FileSystemStorage ---")
+
     MEDIA_ROOT = os.path.join(BASE_DIR, "test_media")
-    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+
+    STORAGES["default"] = {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    }
