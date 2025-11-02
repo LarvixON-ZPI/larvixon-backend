@@ -13,6 +13,10 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: [3.12.6]
+    env:
+      AZURE_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
+      AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
+      AZURE_CONTAINER: ${{ secrets.AZURE_CONTAINER }}
 
     steps:
       - uses: actions/checkout@v4
