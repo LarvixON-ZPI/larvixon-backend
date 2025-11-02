@@ -177,9 +177,9 @@ STORAGES = {
 }
 
 
-AZURE_ACCOUNT_NAME = env("AZURE_ACCOUNT_NAME")
-AZURE_ACCOUNT_KEY = env("AZURE_ACCOUNT_KEY")
-AZURE_CONTAINER = env("AZURE_CONTAINER")
+AZURE_ACCOUNT_NAME = env("AZURE_ACCOUNT_NAME", default="localdev")  # type: ignore
+AZURE_ACCOUNT_KEY = env("AZURE_ACCOUNT_KEY", default="test-key")  # type: ignore
+AZURE_CONTAINER = env("AZURE_CONTAINER", default="test-container")  # type: ignore
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
