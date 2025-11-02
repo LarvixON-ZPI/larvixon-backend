@@ -15,13 +15,6 @@ if TYPE_CHECKING:
     from typing import Any, Dict, Optional, List, Tuple
 
 
-def user_profile_picture_path(instance, filename):
-    warnings.warn(
-        "Use user_picture_upload_to instead", DeprecationWarning, stacklevel=2
-    )
-    return f"profile_pics/user_{instance.user.id}/{filename}"
-
-
 class User(AbstractUser):
     """
     Custom User model extending Django's AbstractUser.
@@ -78,18 +71,16 @@ class UserProfile(models.Model):
     def __str__(self) -> str:
         return f"{self.user.email} - Profile"
 
-    @property
-    def get_profile_picture_url(self):
-        """Returns the URL of the profile picture if it exists."""
-        if self.profile_picture:
-            return self.profile_picture.url
-
     def save(self, *args, **kwargs):
         try:
-            this = UserProfile.objects.get(id=self.id)  # type: ignore
-            if this.profile_picture != self.profile_picture:
-                if this.profile_picture and os.path.exists(this.profile_picture.path):
-                    this.profile_picture.delete(save=False)
+            if self.id:  # type: ignore
+                old_profile = UserProfile.objects.get(id=self.id)  # type: ignore
+                if (
+                    old_profile.profile_picture
+                    and old_profile.profile_picture != self.profile_picture
+                ):
+                    old_profile.profile_picture.delete(save=False)
+                    print("Old profile picture deleted from storage.")
         except UserProfile.DoesNotExist:
             pass
 
@@ -98,4 +89,4 @@ class UserProfile(models.Model):
     def delete(self, *args, **kwargs):
         if self.profile_picture:
             self.profile_picture.delete(save=False)
-        return super(UserProfile, self).delete(*args, **kwargs)
+        return super().delete(*args, **kwargs)

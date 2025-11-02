@@ -10,6 +10,7 @@ def send_video_to_ml(video_path: str) -> Optional[Dict[str, float]]:
     Sends a video file as multipart/form-data to the external ML endpoint
     and returns a dictionary of predictions with confidence scores.
     """
+
     if not os.path.exists(video_path):
         print(f"Error: Video file not found at {video_path}")
         return None
