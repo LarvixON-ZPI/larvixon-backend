@@ -53,9 +53,6 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
             "created_at",
             "completed_at",
             "analysis_results",
-            "video_name",
-            "video",
-            "thumbnail",
         )
 
     def get_video_name(self, obj):

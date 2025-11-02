@@ -57,15 +57,16 @@ class VideoAnalysisTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(VideoAnalysis.objects.count(), 3)
-        video_name = os.path.basename(VideoAnalysis.objects.first().video.name)
+        video_name = os.path.basename(VideoAnalysis.objects.first().video.name)  # type: ignore
         self.assertEqual(video_name, "new_video.mp4")
 
     def test_get_analysis_detail(self):
         detail_url = reverse("analysis:analysis-detail", args=[self.analysis1.id])
         response = self.client.get(detail_url)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("video_url", response.data)
-        self.assertTrue(response.data["video_url"].endswith("test_video1.mp4"))
+        self.assertIn("video_name", response.data)
+        self.assertTrue(response.data["video_name"].endswith("test_video1.mp4"))
 
     def test_update_analysis(self):
         detail_url = reverse("analysis:analysis-detail", args=[self.analysis1.id])

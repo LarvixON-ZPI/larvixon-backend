@@ -258,3 +258,4 @@ AUTH_USER_MODEL = "accounts.User"
 
 if "test" in sys.argv:
     MEDIA_ROOT = os.path.join(BASE_DIR, "test_media")
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
