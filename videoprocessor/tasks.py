@@ -1,3 +1,4 @@
+from django.utils import timezone
 import os
 from analysis.models import Substance, VideoAnalysis
 from videoprocessor.mock_ml_predict import mock_ml_predict
@@ -50,9 +51,12 @@ def process_video_task(analysis_id: int):
                 analysis.analysis_results.create(  # type: ignore
                     substance=detected_substance, confidence_score=score
                 )
+
+            analysis.completed_at = timezone.now()
             analysis.status = VideoAnalysis.Status.COMPLETED
 
         analysis.save()
+        print(f"Processing completed for analysis ID {analysis_id}")
 
     except Exception as e:
         if "analysis" in locals():
