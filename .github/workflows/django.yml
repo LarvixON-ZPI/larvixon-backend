@@ -14,9 +14,9 @@ jobs:
       matrix:
         python-version: [3.12.6]
     env:
-      AZURE_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
-      AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
-      AZURE_CONTAINER: ${{ secrets.AZURE_CONTAINER }}
+      AZURE_ACCOUNT_NAME: ${{ vars.AZURE_ACCOUNT_NAME }}
+      AZURE_ACCOUNT_KEY: ${{ vars.AZURE_ACCOUNT_KEY }}
+      AZURE_CONTAINER: ${{ vars.AZURE_CONTAINER }}
 
     steps:
       - uses: actions/checkout@v4
