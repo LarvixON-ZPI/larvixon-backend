@@ -45,16 +45,18 @@ class VideoAnalysis(models.Model):
     user_feedback: models.TextField = models.TextField(blank=True)
 
     def delete(self, *args, **kwargs):
-        if self.video:
+        if self.video and self.video.name:
             self.video.delete(save=False)
-        if self.thumbnail:
+        if self.thumbnail and self.thumbnail.name:
             self.thumbnail.delete(save=False)
+
+        return super().delete(*args, **kwargs)
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return f"{self.title} - {self.video_name} ({self.status})"
+        return f"{self.title} - {self.video.name} ({self.status})"
 
 
 class Substance(models.Model):

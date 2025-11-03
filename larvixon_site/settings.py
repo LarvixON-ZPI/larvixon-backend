@@ -16,6 +16,7 @@ import sys
 from decouple import config
 import dj_database_url
 import os
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,9 +30,10 @@ ML_ENDPOINT_URL = "http://larvixon-model.fjg9drg3aacpbwbh.westeurope.azurecontai
 SECRET_KEY = "django-insecure-et^2(zj)r#7tfzabapv3fy73zqwuci)^!5_pv5ldbq34pi5=zx"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+env = environ.Env(DEBUG=(bool, False))
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
-ALLOWED_HOSTS: list[str] = []
+ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost", "[::1]"]
 
 DEFAULT_PAGE_SIZE = 6
 
@@ -64,6 +66,7 @@ INSTALLED_APPS = [
     "accounts.apps.AccountsConfig",
     "analysis",
     "reports",
+    "storages",
 ]
 
 MIDDLEWARE = [
@@ -106,7 +109,7 @@ DATABASES = {
     "default": dj_database_url.config(
         default=config(
             "DATABASE_URL", default="sqlite:///db.sqlite3"
-        )  # default to sqlite if no DATABASE_URL is provided
+        )  # default to sqlite if no DATABASE_URL is provided # type: ignore
     )
 }
 
@@ -161,16 +164,23 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.azure_storage.AzureStorage",
+        "OPTIONS": {
+            "timeout": 20,
+            "expiration_secs": 500,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django.core.files.storage.StaticFilesStorage",
+    },
+}
 
-STATIC_URL = "static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
-
-# Media files (user-uploaded files)
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+AZURE_ACCOUNT_NAME = env("AZURE_ACCOUNT_NAME")
+AZURE_ACCOUNT_KEY = env("AZURE_ACCOUNT_KEY")
+AZURE_CONTAINER = env("AZURE_CONTAINER")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -248,4 +258,11 @@ CORS_ALLOWED_HEADERS = [
 AUTH_USER_MODEL = "accounts.User"
 
 if "test" in sys.argv:
+    print("--- RUNNING IN TEST MODE ---")
+    print("--- Overriding default storage to FileSystemStorage ---")
+
     MEDIA_ROOT = os.path.join(BASE_DIR, "test_media")
+
+    STORAGES["default"] = {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    }

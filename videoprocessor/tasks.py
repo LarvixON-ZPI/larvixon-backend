@@ -1,7 +1,10 @@
+from django.utils import timezone
 import os
 from analysis.models import Substance, VideoAnalysis
 from videoprocessor.mock_ml_predict import mock_ml_predict
 from .send_video_to_ml import send_video_to_ml
+from django.core.files.storage import default_storage
+from tempfile import NamedTemporaryFile
 
 
 def get_sorted_predictions(scores):
@@ -17,18 +20,26 @@ def get_sorted_predictions(scores):
 
 def process_video_task(analysis_id: int):
     """
-    Uses a mock ML model that takes a full video and updates the database.
+    Send the video to the ML model for processing. Update the database when done.
     """
     try:
         analysis = VideoAnalysis.objects.get(id=analysis_id)
-        video_path = analysis.video.path
+    except VideoAnalysis.DoesNotExist:
+        print(f"VideoAnalysis with ID {analysis_id} not found.")
+        return
+
+    try:
         analysis.status = VideoAnalysis.Status.PENDING
         analysis.save()
 
-        print(f"Processing video at {video_path} for analysis ID {analysis_id}")
-        # TODO: Check on real model, mocked data works
-        results = send_video_to_ml(video_path)
-        # results = mock_ml_predict(video_path)
+        with default_storage.open(analysis.video.name, "rb") as f:
+            with NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_file:
+                tmp_file.write(f.read())
+                tmp_file.flush()
+                video_path = tmp_file.name
+
+                print(f"Processing video at {video_path} for analysis ID {analysis_id}")
+                results = send_video_to_ml(video_path)
 
         if not results:
             analysis.status = VideoAnalysis.Status.FAILED
@@ -37,15 +48,15 @@ def process_video_task(analysis_id: int):
                 detected_substance, _ = Substance.objects.get_or_create(
                     name_en=substance_name
                 )
-                analysis.analysis_results.create(
+                analysis.analysis_results.create(  # type: ignore
                     substance=detected_substance, confidence_score=score
                 )
+
+            analysis.completed_at = timezone.now()
             analysis.status = VideoAnalysis.Status.COMPLETED
 
         analysis.save()
-
-    except VideoAnalysis.DoesNotExist:
-        print(f"VideoAnalysis with ID {analysis_id} not found.")
+        print(f"Processing completed for analysis ID {analysis_id}")
 
     except Exception as e:
         if "analysis" in locals():
