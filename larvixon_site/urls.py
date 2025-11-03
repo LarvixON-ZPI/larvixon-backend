@@ -51,6 +51,8 @@ urlpatterns = [
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     # Video processor endpoints
     path("api/videoprocessor/", include("videoprocessor.urls")),
+    # Reports endpoins
+    path("api/reports/", include("reports.urls")),
 ]
 
 if settings.DEBUG:
