@@ -1,3 +1,4 @@
+import os
 import threading
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -44,13 +45,19 @@ class VideoUploadView(APIView):
             self._video_manager.extract_and_save_first_frame(video_file)
         )
 
+        video_file_name = os.path.basename(video_file.name)
+        thumbnail_filename = os.path.basename(thumbnail_filename)
+
         try:
             with transaction.atomic():
                 analysis = VideoAnalysis.objects.create(user=request.user, title=title)
-                analysis.video.save(video_file.name, video_file, save=True)
+                analysis.video.save(video_file_name, video_file, save=True)
                 analysis.thumbnail.save(
                     thumbnail_filename, thumbnail_content, save=True
                 )
+
+                request.user.unmark_new_user()  # type: ignore
+
         except (IOError, Exception) as e:
             print(e)
             return Response(

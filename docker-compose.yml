@@ -33,6 +33,9 @@ services:
       - SECRET_KEY=${SECRET_KEY:-changeme-insecure}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_SECRET=${GOOGLE_SECRET:-}
+      - AZURE_ACCOUNT_NAME=${AZURE_ACCOUNT_NAME}
+      - AZURE_ACCOUNT_KEY=${AZURE_ACCOUNT_KEY}
+      - AZURE_CONTAINER=${AZURE_CONTAINER}
     depends_on:
       db:
         condition: service_healthy
