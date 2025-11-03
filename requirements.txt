@@ -3,6 +3,7 @@ attrs==25.3.0
 azure-core==1.36.0
 azure-storage-blob==12.27.0
 black==25.1.0
+Brotli==1.1.0
 certifi==2025.8.3
 cffi==1.17.1
 charset-normalizer==3.4.2
@@ -27,6 +28,7 @@ djangorestframework-stubs==3.16.1
 djangorestframework_simplejwt==5.5.1
 drf-spectacular==0.28.0
 fido2==2.0.0
+fonttools==4.60.1
 gunicorn==23.0.0
 idna==3.10
 inflection==0.5.1
@@ -45,10 +47,13 @@ psycopg2-binary==2.9.11
 pycparser==2.22
 PyJWT==2.10.1
 pyotp==2.9.0
+pyphen==0.17.2
 python-decouple==3.8
+pytokens==0.1.10
 PyYAML==6.0.2
 qrcode==8.2
 referencing==0.36.2
+reportlab==4.4.4
 requests==2.32.4
 rpds-py==0.27.0
 sqlparse==0.5.3
@@ -59,3 +64,5 @@ typing_extensions==4.14.1
 tzdata==2025.2
 uritemplate==4.2.0
 urllib3==2.5.0
+webencodings==0.5.1
+zopfli==0.2.3.post1
