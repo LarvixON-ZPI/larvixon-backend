@@ -118,7 +118,7 @@ class AnalysisReportView(APIView):
                 data.append(
                     [
                         result.substance.name_en,
-                        f"{result.confidence_score:.2f}",
+                        f"{result.confidence_score:.2f}%",
                     ]
                 )
         else:
