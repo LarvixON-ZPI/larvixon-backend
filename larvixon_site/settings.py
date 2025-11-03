@@ -9,11 +9,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
-SECRET_KEY: = env("SECRET_KEY", default="django-insecure-fallback-key-dla-dev")  # type: ignore
+SECRET_KEY = env("SECRET_KEY", default="django-insecure-fallback-key-dla-dev")  # type: ignore
 
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["127.0.0.1", "localhost"])  # type: ignore
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["larvixon-backend-v1.azurewebsites.net", "127.0.0.1", "localhost"])  # type: ignore
 
 ML_ENDPOINT_URL = env("ML_ENDPOINT_URL", default="http://127.0.0.1:8001/predict")  # type: ignore
 
