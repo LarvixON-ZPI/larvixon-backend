@@ -173,7 +173,7 @@ STORAGES = {
         },
     },
     "staticfiles": {
-        "BACKEND": "django.core.files.storage.StaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
