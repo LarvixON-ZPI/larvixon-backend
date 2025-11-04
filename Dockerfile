@@ -10,7 +10,7 @@ WORKDIR /app
 # Twoja lista zależności systemowych jest świetna, rozwiązuje błąd OpenCV
 RUN apt-get update && apt-get install -y \
     postgresql-client \
-    libgl1 \
+    libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
     libxrender1 \
