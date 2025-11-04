@@ -6,11 +6,11 @@
 
 REST API backend for the Larvixon larval behavior analysis system. Built with Django REST Framework and includes comprehensive user account management and video analysis tracking.
 
-## Version 1.0 
-Running on Azure App Service with PostgreSQL database and Azure Blob Storage. 
-```
-https://larvixon-backend-v1-c0dxc7aybwbmfdfe.westeurope-01.azurewebsites.net
-```
+## Version 1.0
+
+Running on Azure App Service with PostgreSQL database and Azure Blob Storage:
+
+<https://larvixon-backend-v1-c0dxc7aybwbmfdfe.westeurope-01.azurewebsites.net>
 
 ## Features
 
