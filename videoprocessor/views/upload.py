@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import permissions
 from rest_framework.request import Request
+from rest_framework import serializers
 from django.db import transaction
 from drf_spectacular.utils import extend_schema
 
@@ -17,6 +18,7 @@ from ..video_file_manager import VideoFileManager
 class VideoUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.Serializer
 
     _video_manager = VideoFileManager()
 
