@@ -23,4 +23,4 @@ COPY . /app
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn larvixon_site.wsgi:application --bind 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn larvixon_site.wsgi:application --worker-class gevent --workers 4 --bind 0.0.0.0:8000"]
