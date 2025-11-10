@@ -29,6 +29,14 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from django.contrib.staticfiles import finders
 
 
+class AnalysisReportSerializer(serializers.Serializer):
+    """
+    empty serializer for analysis report view to supress warnings
+    """
+
+    pass
+
+
 class AnalysisReportView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = serializers.Serializer

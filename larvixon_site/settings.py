@@ -135,13 +135,10 @@ USE_I18N = True
 USE_TZ = True
 
 # ---Django-allauth settings---
-ACCOUNT_AUTHENTICATION_METHOD = "email"
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email"]
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_EMAIL_VERIFICATION = (
-    "none"  # later we can set to "mandatory" if we want email verification
-)
+ACCOUNT_EMAIL_VERIFICATION = "none"
 
 # --- Static files (for collectstatic) ---
 STATIC_URL = "/static/"

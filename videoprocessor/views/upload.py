@@ -15,10 +15,18 @@ from ..tasks import process_video_task
 from ..video_file_manager import VideoFileManager
 
 
+class VideoUploadSerializer(serializers.Serializer):
+    """
+    empty serializer for video upload view to supress warnings
+    """
+
+    pass
+
+
 class VideoUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = serializers.Serializer
+    serializer_class = VideoUploadSerializer
 
     _video_manager = VideoFileManager()
 
