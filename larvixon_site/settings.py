@@ -19,6 +19,19 @@ ML_ENDPOINT_URL = env("ML_ENDPOINT_URL", default="http://127.0.0.1:8001/predict"
 
 DEFAULT_PAGE_SIZE = 6
 
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+
+if not CELERY_BROKER_URL:
+    CELERY_BROKER_URL = "redis://localhost:6379/0"
+    print("WARNING: CELERY_BROKER_URL not set, defaulting to localhost:6379")
+
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
+
 # Application definition
 INSTALLED_APPS = [
     "django.contrib.admin",

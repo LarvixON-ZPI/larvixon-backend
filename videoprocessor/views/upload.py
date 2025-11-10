@@ -1,5 +1,4 @@
 import os
-import threading
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -65,7 +64,7 @@ class VideoUploadView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        threading.Thread(target=process_video_task, args=(analysis.id,)).start()
+        process_video_task.delay(analysis.id)  # type: ignore
 
         return Response(
             {

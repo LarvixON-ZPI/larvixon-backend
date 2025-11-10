@@ -10,6 +10,14 @@ services:
       # Remove source code mount for production
       - static_volume:/app/staticfiles
 
+  worker:
+    environment:
+      - DEBUG=False
+      - AZURE_ACCOUNT_NAME=${AZURE_ACCOUNT_NAME}
+      - AZURE_ACCOUNT_KEY=${AZURE_ACCOUNT_KEY}
+      - AZURE_CONTAINER=${AZURE_CONTAINER}
+    volumes: []
+
   nginx:
     image: nginx:alpine
     container_name: nginx
