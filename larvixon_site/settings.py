@@ -19,11 +19,7 @@ ML_ENDPOINT_URL = env("ML_ENDPOINT_URL", default="http://127.0.0.1:8001/predict"
 
 DEFAULT_PAGE_SIZE = 6
 
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
-
-if not CELERY_BROKER_URL:
-    CELERY_BROKER_URL = "redis://localhost:6379/0"
-    print("WARNING: CELERY_BROKER_URL not set, defaulting to localhost:6379")
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")  # type: ignore
 
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
