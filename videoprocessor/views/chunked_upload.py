@@ -5,11 +5,20 @@ from rest_framework import status, permissions
 from rest_framework.parsers import BaseParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import serializers
 
 from videoprocessor.views.base_video_upload_mixin import BaseVideoUploadMixin
 
 UPLOAD_DIR = os.path.join(settings.MEDIA_ROOT, "temp_uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+class ChunkVideoUploadSerializer(serializers.Serializer):
+    """
+    empty serializer for video upload view to supress warnings
+    """
+
+    pass
 
 
 class OctetStreamParser(BaseParser):
@@ -22,6 +31,7 @@ class OctetStreamParser(BaseParser):
 class ChunkedUploadView(BaseVideoUploadMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [OctetStreamParser]
+    serializer_class = ChunkVideoUploadSerializer
 
     def post(self, request, *args, **kwargs):
         upload_id = request.headers.get("Upload-Id")

@@ -1,5 +1,4 @@
-# upload.py
-import os
+from rest_framework import serializers
 from rest_framework import status, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
@@ -8,9 +7,18 @@ from drf_spectacular.utils import extend_schema
 from videoprocessor.views.base_video_upload_mixin import BaseVideoUploadMixin
 
 
+class VideoUploadSerializer(serializers.Serializer):
+    """
+    empty serializer for video upload view to supress warnings
+    """
+
+    pass
+
+
 class VideoUploadView(BaseVideoUploadMixin, APIView):
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = VideoUploadSerializer
 
     @extend_schema(
         request={

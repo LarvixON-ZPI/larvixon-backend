@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import serializers
 from analysis.models import VideoAnalysis
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -28,8 +29,17 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from django.contrib.staticfiles import finders
 
 
+class AnalysisReportSerializer(serializers.Serializer):
+    """
+    empty serializer for analysis report view to supress warnings
+    """
+
+    pass
+
+
 class AnalysisReportView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = AnalysisReportSerializer
 
     def get(self, request, pk):
         try:
@@ -112,7 +122,7 @@ class AnalysisReportView(APIView):
         elements.append(Paragraph("<b>Detected Substances</b>", styles["Heading2"]))
         data = [["Substance", "Confidence Score"]]
 
-        results = analysis.analysis_results.all()
+        results = analysis.analysis_results.all()  # type: ignore
         if results.exists():
             for result in results:
                 data.append(

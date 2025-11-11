@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
+from drf_spectacular.types import OpenApiTypes
 from .models import Substance, VideoAnalysis, AnalysisResult
 
 
@@ -55,6 +57,7 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
             "analysis_results",
         )
 
+    @extend_schema_field(OpenApiTypes.STR)
     def get_video_name(self, obj):
         if not obj.video:
             return None
