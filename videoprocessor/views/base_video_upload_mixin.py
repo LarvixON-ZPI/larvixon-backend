@@ -1,6 +1,4 @@
 import os
-import threading
-from django.conf import settings
 from rest_framework.response import Response
 from rest_framework import status
 from analysis.models import VideoAnalysis
@@ -53,7 +51,8 @@ class BaseVideoUploadMixin:
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        threading.Thread(target=process_video_task, args=(analysis.id,)).start()
+        process_video_task.delay(analysis.id)  # type: ignore
+
         return Response(
             {
                 "message": "Video processed and analysis started.",
