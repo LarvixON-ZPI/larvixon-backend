@@ -14,10 +14,21 @@ SECRET_KEY = env("SECRET_KEY", default="django-insecure-fallback-key-dla-dev")  
 DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["larvixon-backend-v1.azurewebsites.net", "127.0.0.1", "localhost"])  # type: ignore
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "httpsS")
 
 ML_ENDPOINT_URL = env("ML_ENDPOINT_URL", default="http://127.0.0.1:8001/predict")  # type: ignore
 
 DEFAULT_PAGE_SIZE = 6
+
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")  # type: ignore
+
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
 
 # Application definition
 INSTALLED_APPS = [
@@ -264,7 +275,7 @@ CORS_ALLOWED_ORIGINS = env.list(
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_HEADERS = [
+CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
     "authorization",
@@ -274,6 +285,10 @@ CORS_ALLOWED_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
+    "content-range",
+    "upload-id",
+    "filename",
+    "title",
 ]
 
 # Custom user model

@@ -21,6 +21,18 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: .
     container_name: backend
@@ -36,8 +48,32 @@ services:
       - AZURE_ACCOUNT_NAME=${AZURE_ACCOUNT_NAME}
       - AZURE_ACCOUNT_KEY=${AZURE_ACCOUNT_KEY}
       - AZURE_CONTAINER=${AZURE_CONTAINER}
+      - CELERY_BROKER_URL=redis://redis:6379/0
     depends_on:
       db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    container_name: worker
+    restart: unless-stopped
+    command: celery -A larvixon_site worker -l info
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-larvixon_user}:${POSTGRES_PASSWORD:-larvixon_password}@db:5432/${POSTGRES_DB:-larvixon_db}
+      - DEBUG=${DEBUG:-True}
+      - SECRET_KEY=${SECRET_KEY:-changeme-insecure}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_SECRET=${GOOGLE_SECRET:-}
+      - AZURE_ACCOUNT_NAME=${AZURE_ACCOUNT_NAME}
+      - AZURE_ACCOUNT_KEY=${AZURE_ACCOUNT_KEY}
+      - AZURE_CONTAINER=${AZURE_CONTAINER}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
 volumes:

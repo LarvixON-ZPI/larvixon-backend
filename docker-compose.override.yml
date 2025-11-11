@@ -7,3 +7,9 @@ services:
       - .:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+
+  worker:
+    command: celery -A larvixon_site worker -l info
+    volumes:
+      - .:/app
+      - media_volume:/app/media

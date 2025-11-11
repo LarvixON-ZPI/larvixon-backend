@@ -1,5 +1,6 @@
-from django.utils import timezone
 import os
+from celery import shared_task
+from django.utils import timezone
 from analysis.models import Substance, VideoAnalysis
 from videoprocessor.mock_ml_predict import mock_ml_predict
 from .send_video_to_ml import send_video_to_ml
@@ -18,10 +19,13 @@ def get_sorted_predictions(scores):
     return sorted_predictions
 
 
+@shared_task
 def process_video_task(analysis_id: int):
     """
     Send the video to the ML model for processing. Update the database when done.
     """
+    video_path = None
+
     try:
         analysis = VideoAnalysis.objects.get(id=analysis_id)
     except VideoAnalysis.DoesNotExist:
@@ -63,3 +67,11 @@ def process_video_task(analysis_id: int):
             analysis.status = VideoAnalysis.Status.FAILED
             analysis.save()
         print(f"An error occurred: {e}")
+
+    finally:
+        if video_path and os.path.exists(video_path):
+            try:
+                os.remove(video_path)
+                print(f"Cleaned up temp file: {video_path}")
+            except Exception as e:
+                print(f"Error cleaning up temp file {video_path}: {e}")
