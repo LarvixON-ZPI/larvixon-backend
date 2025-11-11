@@ -39,7 +39,7 @@ class AnalysisReportSerializer(serializers.Serializer):
 
 class AnalysisReportView(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = serializers.Serializer
+    serializer_class = AnalysisReportSerializer
 
     def get(self, request, pk):
         try:
