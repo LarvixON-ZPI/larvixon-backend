@@ -267,7 +267,7 @@ CORS_ALLOWED_ORIGINS = env.list(
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_HEADERS = [
+CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
     "authorization",
@@ -277,6 +277,10 @@ CORS_ALLOWED_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
+    "content-range",
+    "upload-id",
+    "filename",
+    "title",
 ]
 
 # Custom user model
