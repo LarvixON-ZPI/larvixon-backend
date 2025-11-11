@@ -29,4 +29,4 @@ RUN chmod +x /app/start.sh
 
 EXPOSE 8000
 
-CMD ["/app/start.sh"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
