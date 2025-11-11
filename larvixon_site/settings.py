@@ -145,12 +145,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-# ---Django-allauth settings---
-ACCOUNT_LOGIN_METHODS = {"email"}
-ACCOUNT_SIGNUP_FIELDS = ["email"]
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_EMAIL_VERIFICATION = "none"
-
 # --- Static files (for collectstatic) ---
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
