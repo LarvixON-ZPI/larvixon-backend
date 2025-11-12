@@ -1,9 +1,4 @@
 import os
-from django.shortcuts import render
-
-# Create your views here.
-from django.conf import settings
-from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.utils import timezone
 from io import BytesIO
@@ -14,7 +9,6 @@ from rest_framework import status
 from rest_framework import serializers
 from analysis.models import VideoAnalysis
 from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.platypus import (
