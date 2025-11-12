@@ -25,7 +25,11 @@ class VideoAnalysis(models.Model):
     user: models.ForeignKey[User, User] = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="analyses"
     )
-    video = models.FileField(upload_to=user_video_upload_to)
+    video = models.FileField(
+        upload_to=user_video_upload_to,
+        blank=True,
+        null=True,
+    )
     thumbnail = models.ImageField(
         upload_to=user_thumbnail_upload_to,
         blank=True,

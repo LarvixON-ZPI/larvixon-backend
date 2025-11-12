@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 from celery import shared_task
 from django.utils import timezone
@@ -75,3 +76,40 @@ def process_video_task(analysis_id: int):
                 print(f"Cleaned up temp file: {video_path}")
             except Exception as e:
                 print(f"Error cleaning up temp file {video_path}: {e}")
+
+
+@shared_task
+def delete_old_analyses():
+    """
+    This task runs on a schedule.
+    It finds analyses older than 14 days, deletes their associated
+    video file (but keeps the thumbnail), and sets the
+    database 'video' field to NULL.
+    """
+    print(
+        "CELERY BEAT: Running daily cleanup: Pruning video files older than 14 days..."
+    )
+
+    fourteen_days_ago = timezone.now() - timedelta(days=14)
+
+    analyses_to_prune = VideoAnalysis.objects.filter(
+        created_at__lte=fourteen_days_ago, video__isnull=False
+    )
+
+    for analysis in analyses_to_prune:
+        try:
+            if analysis.video:
+                analysis.video.delete(save=False)
+        except Exception as e:
+            print(f"CELERY BEAT: Error deleting video for analysis {analysis.id}: {e}")
+
+    updated_count = analyses_to_prune.update(video=None)
+
+    if updated_count > 0:
+        print(
+            f"CELERY BEAT: Successfully pruned video files for {updated_count} analyses."
+        )
+    else:
+        print("CELERY BEAT: No old analyses found for video pruning.")
+
+    return f"Pruned video files for {updated_count} analyses."

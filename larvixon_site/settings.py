@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 import os
 import environ
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -29,6 +30,13 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
+
+CELERY_BEAT_SCHEDULE = {
+    "delete-old-analyses-daily": {
+        "task": "analysis.tasks.delete_old_analyses",
+        "schedule": crontab(hour=0, minute=0),  # every day at midnight
+    },
+}
 
 # Application definition
 INSTALLED_APPS = [
