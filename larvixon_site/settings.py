@@ -13,12 +13,13 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-fallback-key-dla-dev")  # type: ignore
 
 DEBUG = env("DEBUG")
+IS_TESTING = "test" in sys.argv
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["larvixon-backend-v1.azurewebsites.net", "127.0.0.1", "localhost"])  # type: ignore
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-if DEBUG is False:
+if DEBUG is False and not IS_TESTING:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
@@ -303,7 +304,7 @@ CORS_ALLOW_HEADERS = [
 # Custom user model
 AUTH_USER_MODEL = "accounts.User"
 
-if "test" in sys.argv:
+if IS_TESTING:
     print("--- RUNNING IN TEST MODE ---")
     print("--- Overriding default storage to FileSystemStorage ---")
 
