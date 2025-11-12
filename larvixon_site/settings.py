@@ -38,6 +38,8 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+VIDEO_LIFETIME_DAYS = env.int("VIDEO_LIFETIME_DAYS", default=14)  # type: ignore
+
 # Application definition
 INSTALLED_APPS = [
     "django.contrib.admin",

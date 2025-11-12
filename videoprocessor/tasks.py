@@ -3,7 +3,7 @@ import os
 from celery import shared_task
 from django.utils import timezone
 from analysis.models import Substance, VideoAnalysis
-from videoprocessor.mock_ml_predict import mock_ml_predict
+from larvixon_site.settings import VIDEO_LIFETIME_DAYS
 from .send_video_to_ml import send_video_to_ml
 from django.core.files.storage import default_storage
 from tempfile import NamedTemporaryFile
@@ -90,7 +90,7 @@ def cleanup_old_analyses_videos():
         "CELERY BEAT: Running daily cleanup: Pruning video files older than 14 days..."
     )
 
-    fourteen_days_ago = timezone.now() - timedelta(days=14)
+    fourteen_days_ago = timezone.now() - timedelta(days=VIDEO_LIFETIME_DAYS)  # type: ignore
 
     analyses_to_prune = VideoAnalysis.objects.filter(
         created_at__lte=fourteen_days_ago, video__isnull=False
