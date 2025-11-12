@@ -18,6 +18,11 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["larvixon-backend-v1.azureweb
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+if DEBUG is False:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 ML_ENDPOINT_URL = env("ML_ENDPOINT_URL", default="http://127.0.0.1:8001/predict")  # type: ignore
 
 DEFAULT_PAGE_SIZE = 6
