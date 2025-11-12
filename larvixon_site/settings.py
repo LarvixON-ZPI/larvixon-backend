@@ -15,6 +15,8 @@ SECRET_KEY = env("SECRET_KEY", default="django-insecure-fallback-key-dla-dev")  
 DEBUG = env("DEBUG")
 IS_TESTING = "test" in sys.argv
 
+FORCE_HTTPS = env.bool("FORCE_HTTPS", default=False)  # type: ignore
+
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["larvixon-backend-v1.azurewebsites.net", "127.0.0.1", "localhost"])  # type: ignore
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -80,6 +82,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "larvixon_site.middleware.ForceHTTPSMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
