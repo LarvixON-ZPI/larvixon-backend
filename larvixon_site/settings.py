@@ -17,7 +17,7 @@ IS_TESTING = "test" in sys.argv
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["larvixon-backend-v1.azurewebsites.net", "127.0.0.1", "localhost"])  # type: ignore
 USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_ARR_SSL", "on")
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if DEBUG is False and not IS_TESTING:
     SECURE_SSL_REDIRECT = True
