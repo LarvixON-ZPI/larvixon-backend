@@ -79,7 +79,7 @@ def process_video_task(analysis_id: int):
 
 
 @shared_task
-def delete_old_analyses():
+def cleanup_old_analyses_videos():
     """
     This task runs on a schedule.
     It finds analyses older than 14 days, deletes their associated

@@ -32,8 +32,8 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
 
 CELERY_BEAT_SCHEDULE = {
-    "delete-old-analyses-daily": {
-        "task": "analysis.tasks.delete_old_analyses",
+    "cleanup-old-analyses-videos-daily": {
+        "task": "analysis.tasks.cleanup_old_analyses_videos",
         "schedule": crontab(hour=0, minute=0),  # every day at midnight
     },
 }
