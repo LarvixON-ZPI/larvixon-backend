@@ -3,9 +3,23 @@
 echo "--- DIAGNOSTIC: Checking Environment Variables ---"
 echo "FORCE_HTTPS = [$FORCE_HTTPS]"
 echo "DEBUG = [$DEBUG]"
-echo "PRE_BUILD_COMMAND (first 30 chars) = [${PRE_BUILD_COMMAND:0:30}...]"
-echo "CELERY_BROKER_URL (first 30 chars) = [${CELERY_BROKER_URL:0:30}...]"
-echo "CELERY_RESULT_BACKEND (first 30 chars) = [${CELERY_RESULT_BACKEND:0:30}...]"
+if [ -n "$PRE_BUILD_COMMAND" ]; then
+    echo "PRE_BUILD_COMMAND is SET"
+else
+    echo "PRE_BUILD_COMMAND is NOT SET"
+fi
+
+if [ -n "$CELERY_BROKER_URL" ]; then
+    echo "CELERY_BROKER_URL is SET (hidden)"
+else
+    echo "CELERY_BROKER_URL is NOT SET"
+fi
+
+if [ -n "$CELERY_RESULT_BACKEND" ]; then
+    echo "CELERY_RESULT_BACKEND is SET (hidden)"
+else
+    echo "CELERY_RESULT_BACKEND is NOT SET"
+fi
 echo "--- END OF DIAGNOSTICS ---"
 
 echo "--- Running database migrations ---"
