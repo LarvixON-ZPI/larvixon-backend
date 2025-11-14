@@ -39,6 +39,7 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
             "user",
             "title",
             "status",
+            "error_message",
             "video_name",
             "video",
             "thumbnail",
@@ -54,6 +55,7 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
             "created_at",
             "completed_at",
             "analysis_results",
+            "error_message",
         )
 
     @extend_schema_field(OpenApiTypes.STR)

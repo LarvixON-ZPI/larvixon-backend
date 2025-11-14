@@ -36,6 +36,7 @@ def process_video_task(analysis_id: int) -> None:
 
     try:
         analysis.status = VideoAnalysis.Status.PENDING
+        analysis.error_message = None
         analysis.save()
 
         with default_storage.open(analysis.video.name, "rb") as f:
@@ -49,6 +50,9 @@ def process_video_task(analysis_id: int) -> None:
 
         if not results:
             analysis.status = VideoAnalysis.Status.FAILED
+            analysis.error_message = (
+                "Model request failed: No predictions returned from ML endpoint"
+            )
         else:
             for substance_name, score in get_sorted_predictions(results):
                 detected_substance, _ = Substance.objects.get_or_create(
@@ -67,6 +71,7 @@ def process_video_task(analysis_id: int) -> None:
     except Exception as e:
         if "analysis" in locals():
             analysis.status = VideoAnalysis.Status.FAILED
+            analysis.error_message = f"Model request failed: {str(e)}"
             analysis.save()
         print(f"An error occurred: {e}")
 

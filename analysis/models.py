@@ -39,6 +39,9 @@ class VideoAnalysis(models.Model):
         choices=Status.choices,
         default=Status.PENDING,
     )
+    error_message: models.TextField = models.TextField(
+        blank=True, null=True, help_text="Error details when analysis fails"
+    )
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     completed_at: models.DateTimeField = models.DateTimeField(null=True, blank=True)
 
