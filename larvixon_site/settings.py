@@ -164,11 +164,11 @@ USE_TZ = True
 
 # --- Static files (for collectstatic) ---
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT: Path = BASE_DIR / "staticfiles"
 
 # --- Media files (uploaded by users) ---
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT: Path = BASE_DIR / "media"
 
 # --- Azure Storage configuration ---
 AZURE_ACCOUNT_NAME = env("AZURE_ACCOUNT_NAME", default=None)  # type: ignore
@@ -309,7 +309,7 @@ if IS_TESTING:
     print("--- RUNNING IN TEST MODE ---")
     print("--- Overriding default storage to FileSystemStorage ---")
 
-    MEDIA_ROOT = os.path.join(BASE_DIR, "test_media")
+    MEDIA_ROOT = BASE_DIR / "test_media"
 
     STORAGES["default"] = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
