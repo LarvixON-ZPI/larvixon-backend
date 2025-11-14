@@ -8,6 +8,7 @@ billiard==4.2.2
 black==25.1.0
 Brotli==1.1.0
 celery==5.5.3
+celery-types==0.23.0
 certifi==2025.8.3
 cffi==1.17.1
 charset-normalizer==3.4.2

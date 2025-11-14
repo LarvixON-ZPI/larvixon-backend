@@ -57,7 +57,7 @@ class VideoAnalysisTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(VideoAnalysis.objects.count(), 3)
-        video_name = os.path.basename(VideoAnalysis.objects.first().video.name)  # type: ignore
+        video_name = os.path.basename(VideoAnalysis.objects.first().video.name)
         self.assertEqual(video_name, "new_video.mp4")
 
     def test_get_analysis_detail(self):

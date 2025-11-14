@@ -1,6 +1,5 @@
-import os
-from typing import List, Tuple
-import uuid
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any
 from django.db import models
 from accounts.models import User
 from accounts.utils import user_thumbnail_upload_to, user_video_upload_to
@@ -47,6 +46,9 @@ class VideoAnalysis(models.Model):
         max_length=100, blank=True, null=True
     )
     user_feedback: models.TextField = models.TextField(blank=True)
+
+    if TYPE_CHECKING:
+        analysis_results: Any
 
     def delete(self, *args, **kwargs):
         if self.video and self.video.name:

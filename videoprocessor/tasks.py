@@ -7,6 +7,7 @@ from larvixon_site.settings import VIDEO_LIFETIME_DAYS
 from .send_video_to_ml import send_video_to_ml
 from django.core.files.storage import default_storage
 from tempfile import NamedTemporaryFile
+from datetime import datetime
 
 
 def get_sorted_predictions(scores):
@@ -21,7 +22,7 @@ def get_sorted_predictions(scores):
 
 
 @shared_task
-def process_video_task(analysis_id: int):
+def process_video_task(analysis_id: int) -> None:
     """
     Send the video to the ML model for processing. Update the database when done.
     """
@@ -53,7 +54,7 @@ def process_video_task(analysis_id: int):
                 detected_substance, _ = Substance.objects.get_or_create(
                     name_en=substance_name
                 )
-                analysis.analysis_results.create(  # type: ignore
+                analysis.analysis_results.create(  # type: ignore[attr-defined]
                     substance=detected_substance, confidence_score=score
                 )
 
@@ -79,7 +80,7 @@ def process_video_task(analysis_id: int):
 
 
 @shared_task
-def cleanup_old_analyses_videos():
+def cleanup_old_analyses_videos() -> str:
     """
     This task runs on a schedule.
     It finds analyses older than 14 days, deletes their associated
@@ -90,10 +91,10 @@ def cleanup_old_analyses_videos():
         "CELERY BEAT: Running daily cleanup: Pruning video files older than 14 days..."
     )
 
-    fourteen_days_ago = timezone.now() - timedelta(days=VIDEO_LIFETIME_DAYS)  # type: ignore
+    cutoff_date: datetime = timezone.now() - timedelta(days=int(VIDEO_LIFETIME_DAYS))
 
     analyses_to_prune = VideoAnalysis.objects.filter(
-        created_at__lte=fourteen_days_ago, video__isnull=False
+        created_at__lte=cutoff_date, video__isnull=False
     )
 
     for analysis in analyses_to_prune:
