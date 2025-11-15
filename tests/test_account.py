@@ -105,7 +105,7 @@ class TestUserProfile(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["email"], self.user_data["email"])
 
-    def test_update_user_profile(self):
+    def test_update_user_profile(self) -> None:
         update_data: dict[str, str] = {"first_name": "Updated", "last_name": "Name"}
 
         request: Request = self.factory.patch(
@@ -125,7 +125,7 @@ class TestUserProfile(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-    def test_update_profile_details(self):
+    def test_update_profile_details(self) -> None:
         update_data: dict[str, str] = {
             "bio": "Test user bio for unittest",
             "organization": "Test Organization",
@@ -144,19 +144,19 @@ class TestUserProfile(TestCase):
 
 
 class TestUserStats(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.factory = APIRequestFactory()
-        self.user_data = TestFixtures.get_test_user_data()
-        self.user = User.objects.create_user(
+        self.user_data: dict[str, str] = TestFixtures.get_test_user_data()
+        self.user: User = User.objects.create_user(
             username=self.user_data["username"],
             email=self.user_data["email"],
             password=self.user_data["password"],
         )
 
-    def test_get_user_stats(self):
-        request = self.factory.get("/accounts/stats/")
+    def test_get_user_stats(self) -> None:
+        request: Request = self.factory.get("/accounts/stats/")
         force_authenticate(request, user=self.user)
-        response = UserProfileStats.as_view()(request)
+        response: Response = UserProfileStats.as_view()(request)
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("total_analyses", response.data)
@@ -167,5 +167,5 @@ class TestUserStats(TestCase):
 
 
 if __name__ == "_main_":
-    success = run_tests([TestAuthentication, TestUserProfile, TestUserStats])
+    success: bool = run_tests([TestAuthentication, TestUserProfile, TestUserStats])
     sys.exit(0 if success else 1)

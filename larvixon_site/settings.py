@@ -4,21 +4,24 @@ import sys
 import os
 import environ
 from celery.schedules import crontab
+from typing import Any
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(DEBUG=(bool, False))
 
-SECRET_KEY: str = env("SECRET_KEY", default="django-insecure-fallback-key-dla-dev")  # type: ignore[call-arg]
+env_get: Any = env  # type: ignore[call-arg]
 
-DEBUG = env("DEBUG")
+SECRET_KEY: str = env_get("SECRET_KEY", default="django-insecure-fallback-key-dla-dev")
+
+DEBUG = env_get("DEBUG")
 IS_TESTING = "test" in sys.argv
 
-FORCE_HTTPS: bool = env.bool("FORCE_HTTPS", default=False)  # type: ignore[call-arg]
+FORCE_HTTPS: bool = env_get.bool("FORCE_HTTPS", default=False)
 
-ALLOWED_HOSTS: list[str] = env.list(
+ALLOWED_HOSTS: list[str] = env_get.list(
     "ALLOWED_HOSTS",
-    default=["larvixon-backend-v1.azurewebsites.net", "127.0.0.1", "localhost"],  # type: ignore[call-arg]
+    default=["larvixon-backend-v1.azurewebsites.net", "127.0.0.1", "localhost"],
 )
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -28,11 +31,15 @@ if DEBUG is False and not IS_TESTING:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-ML_ENDPOINT_URL: str = env("ML_ENDPOINT_URL", default="http://127.0.0.1:8001/predict")  # type: ignore[call-arg]
+ML_ENDPOINT_URL: str = env_get(
+    "ML_ENDPOINT_URL", default="http://127.0.0.1:8001/predict"
+)
 
 DEFAULT_PAGE_SIZE = 6
 
-CELERY_BROKER_URL: str = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")  # type: ignore[call-arg]
+CELERY_BROKER_URL: str = env_get(
+    "CELERY_BROKER_URL", default="redis://localhost:6379/0"
+)
 
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
@@ -48,7 +55,7 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-VIDEO_LIFETIME_DAYS: int = env.int("VIDEO_LIFETIME_DAYS", default=14)  # type: ignore[call-arg]
+VIDEO_LIFETIME_DAYS: int = env_get.int("VIDEO_LIFETIME_DAYS", default=14)
 
 # Application definition
 INSTALLED_APPS = [
@@ -115,7 +122,7 @@ WSGI_APPLICATION = "larvixon_site.wsgi.application"
 
 
 # Database
-DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3")}  # type: ignore[call-arg]
+DATABASES = {"default": env_get.db("DATABASE_URL", default="sqlite:///db.sqlite3")}
 
 
 # Password validation
@@ -144,8 +151,8 @@ AUTHENTICATION_BACKENDS = (
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "APP": {
-            "client_id": env("GOOGLE_CLIENT_ID", default=""),  # type: ignore[call-arg]
-            "secret": env("GOOGLE_SECRET", default=""),  # type: ignore[call-arg]
+            "client_id": env_get("GOOGLE_CLIENT_ID", default=""),
+            "secret": env_get("GOOGLE_SECRET", default=""),
             "key": "",
         }
     }
@@ -172,9 +179,9 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT: Path = BASE_DIR / "media"
 
 # --- Azure Storage configuration ---
-AZURE_ACCOUNT_NAME: str | None = env("AZURE_ACCOUNT_NAME", default=None)  # type: ignore[call-arg]
-AZURE_ACCOUNT_KEY: str | None = env("AZURE_ACCOUNT_KEY", default=None)  # type: ignore[call-arg]
-AZURE_CONTAINER: str | None = env("AZURE_CONTAINER", default=None)  # type: ignore[call-arg]
+AZURE_ACCOUNT_NAME: str | None = env_get("AZURE_ACCOUNT_NAME", default=None)
+AZURE_ACCOUNT_KEY: str | None = env_get("AZURE_ACCOUNT_KEY", default=None)
+AZURE_CONTAINER: str | None = env_get("AZURE_CONTAINER", default=None)
 
 if DEBUG is False and AZURE_ACCOUNT_NAME and AZURE_ACCOUNT_KEY and AZURE_CONTAINER:
     print("--- Production Mode using Azure Blob Storage ---")
@@ -280,9 +287,9 @@ SIMPLE_JWT = {
 }
 
 # CORS settings for Flutter app
-CORS_ALLOWED_ORIGINS: list[str] = env.list(
+CORS_ALLOWED_ORIGINS: list[str] = env_get.list(
     "CORS_ALLOWED_ORIGINS",
-    default=["http://localhost:3000", "http://127.0.0.1:3000"],  # type: ignore[call-arg]
+    default=["http://localhost:3000", "http://127.0.0.1:3000"],
 )
 
 CORS_ALLOW_CREDENTIALS = True
@@ -312,6 +319,4 @@ if IS_TESTING:
 
     MEDIA_ROOT = BASE_DIR / "test_media"
 
-    STORAGES["default"] = {  # type: ignore[assignment]
-        "BACKEND": "django.core.files.storage.FileSystemStorage"
-    }
+    STORAGES["default"] = {"BACKEND": "django.core.files.storage.FileSystemStorage"}  # type: ignore[call-arg]
