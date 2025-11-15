@@ -21,19 +21,6 @@ def validate_analysis_status(analysis: VideoAnalysis) -> Optional[Response]:
     return None
 
 
-def validate_model_related_error(analysis: VideoAnalysis) -> Optional[Response]:
-    if not analysis.error_message or not analysis.error_message.startswith(
-        "Model request failed"
-    ):
-        return Response(
-            {
-                "error": "This analysis cannot be retried. Only analyses that failed due to model-related errors can be retried."
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    return None
-
-
 def validate_analysis_age(analysis: VideoAnalysis) -> Optional[Response]:
     cutoff_date = timezone.now() - timedelta(days=int(VIDEO_LIFETIME_DAYS))
     if analysis.created_at < cutoff_date:
@@ -69,8 +56,7 @@ class VideoAnalysisRetryView(APIView):
     @extend_schema(
         summary="Retry failed analysis",
         description=(
-            f"Retry a failed video analysis. Only analyses that failed due to model-related errors "
-            f"(indicated by error_message starting with 'Model request failed') can be retried. "
+            f"Retry a failed video analysis. "
             f"The analysis must have been created within the last {VIDEO_LIFETIME_DAYS} days and still have a video file."
         ),
         responses={
@@ -104,7 +90,6 @@ class VideoAnalysisRetryView(APIView):
 
         validations = [
             validate_analysis_status,
-            validate_model_related_error,
             validate_analysis_age,
             validate_video_exists,
         ]

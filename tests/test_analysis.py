@@ -200,22 +200,6 @@ class TestAnalysisRetry(TestCase):
         self.assertIn("error", response.data)
         self.assertEqual(response.data["error"], "Only failed analyses can be retried.")
 
-    def test_cannot_retry_non_model_failure(self) -> None:
-        analysis: VideoAnalysis = self._create_failed_analysis(
-            "Database error: Connection lost"
-        )
-
-        request: Request = self.factory.post(f"/api/analysis/{analysis.id}/retry/")
-        force_authenticate(request, user=self.user)
-        response: Response = VideoAnalysisRetryView.as_view()(request, pk=analysis.id)
-
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("error", response.data)
-        self.assertEqual(
-            response.data["error"],
-            "This analysis cannot be retried. Only analyses that failed due to model-related errors can be retried.",
-        )
-
     def test_cannot_retry_without_video(self) -> None:
         analysis: VideoAnalysis = self._create_failed_analysis(
             "Model request failed: Timeout", with_video=False
