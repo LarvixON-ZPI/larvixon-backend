@@ -1,6 +1,5 @@
-import unittest
 import sys
-from common import APITestCase, run_tests
+from tests.common import APITestCase, run_tests
 
 
 class TestVideoAnalysis(APITestCase):

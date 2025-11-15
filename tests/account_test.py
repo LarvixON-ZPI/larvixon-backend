@@ -1,6 +1,6 @@
 import unittest
 import sys
-from common import APITestCase, TestFixtures, run_tests
+from tests.common import APITestCase, TestFixtures, run_tests
 
 
 class TestAuthentication(APITestCase):
