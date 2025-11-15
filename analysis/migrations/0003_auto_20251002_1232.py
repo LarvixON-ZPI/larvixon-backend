@@ -6,8 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('analysis', '0002_substance_remove_videoanalysis_confidence_scores_and_more'),
+        ("analysis", "0002_substance_remove_videoanalysis_confidence_scores_and_more"),
     ]
 
-    operations = [
-    ]
+    operations = []

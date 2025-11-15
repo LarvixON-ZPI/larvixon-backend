@@ -5,11 +5,7 @@ import time
 import os
 import sys
 import subprocess
-import sqlite3
 from pathlib import Path
-
-# Add the parent directory to Python path so Django can be found
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 TEST_DB_PATH = str(Path(__file__).parent.parent / "test_db.sqlite3")
 

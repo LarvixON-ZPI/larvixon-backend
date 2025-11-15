@@ -51,7 +51,7 @@ class BaseVideoUploadMixin:
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        process_video_task.delay(analysis.id)  # type: ignore
+        process_video_task.delay(analysis.id)
 
         return Response(
             {

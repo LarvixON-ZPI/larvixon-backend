@@ -116,7 +116,7 @@ class AnalysisReportView(APIView):
         elements.append(Paragraph("<b>Detected Substances</b>", styles["Heading2"]))
         data = [["Substance", "Confidence Score"]]
 
-        results = analysis.analysis_results.all()  # type: ignore
+        results = analysis.analysis_results.all()
         if results.exists():
             for result in results:
                 data.append(

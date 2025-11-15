@@ -232,6 +232,7 @@ For production deployment:
 3. Write comprehensive tests for new features
 4. Try to follow [Conventional Commit Messages](https://gist.github.com/qoomon/5dfcdf8eec66a051ecd85625518cfd13)
 5. Use Python Black formatter and ensure type checking is set as Standard or higher
+6. Update requirements.txt when adding new dependencies. Run `mypy . --install-types --non-interactive` to ensure all types are installed. Run `pip freeze > requirements.txt` to update the file.
 
 ## Recommended tooling
 
