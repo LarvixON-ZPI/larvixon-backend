@@ -1,6 +1,4 @@
-import os
-from typing import List, Tuple
-import uuid
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from accounts.models import User
 from accounts.utils import user_thumbnail_upload_to, user_video_upload_to
@@ -29,6 +27,7 @@ class VideoAnalysis(models.Model):
         upload_to=user_video_upload_to,
         blank=True,
         null=True,
+        validators=[FileExtensionValidator(allowed_extensions=["mp4"])],
     )
     thumbnail = models.ImageField(
         upload_to=user_thumbnail_upload_to,
