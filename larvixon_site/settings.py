@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(DEBUG=(bool, False))
 
-env_get: Any = env  # type: ignore[call-arg]
+env_get: Any = env
 
 SECRET_KEY: str = env_get("SECRET_KEY", default="django-insecure-fallback-key-dla-dev")
 

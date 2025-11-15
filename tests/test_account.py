@@ -166,6 +166,6 @@ class TestUserStats(TestCase):
         self.assertIn("failed_analyses", response.data)
 
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     success: bool = run_tests([TestAuthentication, TestUserProfile, TestUserStats])
     sys.exit(0 if success else 1)
