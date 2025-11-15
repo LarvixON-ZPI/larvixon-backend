@@ -1,3 +1,4 @@
+import os
 from rest_framework import serializers
 from rest_framework import status, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -45,5 +46,14 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
         if error:
             print(error.data)
             return error
+
+        ext = os.path.splitext(video_file.name)[1].lower()
+        if ext != ".mp4":
+            return Response(
+                {
+                    "error": f"Unsupported file format: {ext}. For now only .mp4 files are allowed."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         return self.save_video_file(request, video_file, title)

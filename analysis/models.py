@@ -1,4 +1,4 @@
-from __future__ import annotations
+from django.core.validators import FileExtensionValidator
 from typing import TYPE_CHECKING, Any
 from django.db import models
 from accounts.models import User
@@ -28,6 +28,7 @@ class VideoAnalysis(models.Model):
         upload_to=user_video_upload_to,
         blank=True,
         null=True,
+        validators=[FileExtensionValidator(allowed_extensions=["mp4"])],
     )
     thumbnail = models.ImageField(
         upload_to=user_thumbnail_upload_to,
