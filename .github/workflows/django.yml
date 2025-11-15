@@ -34,6 +34,4 @@ jobs:
       - name: Run Tests
         run: |
           python manage.py test
-          python manage.py test tests.analysis_retry_test
-          python manage.py test tests.account_test
-          python manage.py test tests.analysis_test
+          python manage.py test tests/
