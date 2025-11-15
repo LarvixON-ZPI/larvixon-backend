@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('analysis', '0003_auto_20251002_1232'),
+        ("analysis", "0003_auto_20251002_1232"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='videoanalysis',
-            name='thumbnail_name',
+            model_name="videoanalysis",
+            name="thumbnail_name",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name='videoanalysis',
-            name='thumbnail_path',
+            model_name="videoanalysis",
+            name="thumbnail_path",
             field=models.CharField(blank=True, max_length=500, null=True),
         ),
     ]

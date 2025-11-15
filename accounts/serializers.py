@@ -4,6 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from .models import User, UserProfile
 from phonenumber_field.serializerfields import PhoneNumberField
 
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True)
@@ -58,7 +59,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:  # type: ignore
         model = UserProfile
-        fields = ("profile_picture", "bio", "phone_number", "organization", "created_at", "updated_at")
+        fields = (
+            "profile_picture",
+            "bio",
+            "phone_number",
+            "organization",
+            "created_at",
+            "updated_at",
+        )
         read_only_fields = ("created_at", "updated_at")
 
 
