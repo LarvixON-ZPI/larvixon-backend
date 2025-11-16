@@ -1,4 +1,8 @@
 #!/bin/sh
+echo "--- DIAGNOSTIC: Forcefully clearing all Python cache (__pycache__) ---"
+find /home/site/wwwroot -path "*/__pycache__/*" -delete
+find /home/site/wwwroot -type d -name "__pycache__" -empty -delete
+echo "--- Python cache cleared. ---"
 
 echo "--- DIAGNOSTIC: Checking Environment Variables ---"
 echo "FORCE_HTTPS = [$FORCE_HTTPS]"
@@ -35,4 +39,4 @@ echo "--- Starting Celery Beat (scheduler) in background... ---"
 celery -A larvixon_site beat -l info &
 
 echo "--- Starting Gunicorn (main process)... ---"
-exec gunicorn larvixon_site.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120
+exec gunicorn larvixon_site.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
