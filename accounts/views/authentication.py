@@ -3,18 +3,9 @@ from rest_framework import generics, status, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
-# Drf Spectacular imports
 from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
-
-# Dj-rest-auth imports
 from dj_rest_auth.registration.views import SocialLoginView
-
-# Allauth social account imports
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
-
-# Allauth MFA imports
 from allauth.mfa.utils import is_mfa_enabled
 
 # App's local imports
@@ -195,11 +186,3 @@ class SocialLoginJWTViewMixin:
 )
 class GoogleLogin(SocialLoginJWTViewMixin, SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
-
-
-@extend_schema(
-    summary="Facebook social authentication idk if this works",
-    tags=["Authentication"],
-)
-class FacebookLogin(SocialLoginJWTViewMixin, SocialLoginView):
-    adapter_class = FacebookOAuth2Adapter
