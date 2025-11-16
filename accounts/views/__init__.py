@@ -5,7 +5,6 @@ from .authentication import (
     UserLoginView,
     UserLogoutView,
     GoogleLogin,
-    FacebookLogin,
 )
 from .profile import (
     UserProfileView,
