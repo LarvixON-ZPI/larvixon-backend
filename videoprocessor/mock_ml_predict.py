@@ -8,13 +8,16 @@ MOCK_CLASS_NAMES = [
     "tetrodotoxin",
 ]
 
+SIMULATE_NONE_FOUND = False
+
 
 def mock_ml_predict(video_path: str) -> dict:
     """
-    Simulates a machine learning model that takes an entire video file as input.
-    (whole video will be pased to the model and splited into frames inside the model in real scenario)
     Returns mock predictions and confidence scores for the video.
     """
+    if SIMULATE_NONE_FOUND:
+        return {}
+
     if not video_path:
         return {}
 

@@ -8,11 +8,12 @@ from typing import Any
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-RUNNING_DEVSERVER = len(sys.argv) > 1 and sys.argv[1] == "runserver"
+RUNNING_ON_AZURE = os.getenv("WEBSITE_SITE_NAME") is not None
+if not RUNNING_ON_AZURE:
+    environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 env = environ.Env(DEBUG=(bool, False))
-if RUNNING_DEVSERVER:
-    environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 env_get: Any = env
 
