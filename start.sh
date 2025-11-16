@@ -1,4 +1,8 @@
 #!/bin/sh
+echo "--- DIAGNOSTIC: Forcefully clearing all Python cache (__pycache__) ---"
+find /home/site/wwwroot -path "*/__pycache__/*" -delete
+find /home/site/wwwroot -type d -name "__pycache__" -empty -delete
+echo "--- Python cache cleared. ---"
 
 echo "--- DIAGNOSTIC: Checking Environment Variables ---"
 echo "FORCE_HTTPS = [$FORCE_HTTPS]"
