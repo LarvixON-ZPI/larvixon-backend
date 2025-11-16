@@ -7,7 +7,11 @@ from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+RUNNING_DEVSERVER = len(sys.argv) > 1 and sys.argv[1] == "runserver"
+
 env = environ.Env(DEBUG=(bool, False))
+if RUNNING_DEVSERVER:
+    environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-fallback-key-dla-dev")  # type: ignore
 
@@ -28,7 +32,6 @@ if DEBUG is False and not IS_TESTING:
 ML_ENDPOINT_URL: str = env("ML_ENDPOINT_URL", default="http://127.0.0.1:8001/predict")  # type: ignore
 
 MOCK_ML: bool = env.bool("MOCK_ML", default=False)  # type: ignore
-
 DEFAULT_PAGE_SIZE = 6
 
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")  # type: ignore
