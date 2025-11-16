@@ -8,7 +8,11 @@ from typing import Any
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+RUNNING_DEVSERVER = len(sys.argv) > 1 and sys.argv[1] == "runserver"
+
 env = environ.Env(DEBUG=(bool, False))
+if RUNNING_DEVSERVER:
+    environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 env_get: Any = env
 
@@ -35,6 +39,7 @@ ML_ENDPOINT_URL: str = env_get(
     "ML_ENDPOINT_URL", default="http://127.0.0.1:8001/predict"
 )
 
+MOCK_ML: bool = env_get("MOCK_ML", default=False)
 DEFAULT_PAGE_SIZE = 6
 
 CELERY_BROKER_URL: str = env_get(

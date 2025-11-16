@@ -4,7 +4,7 @@ from celery import shared_task
 from django.utils import timezone
 from analysis.models import Substance, VideoAnalysis
 from larvixon_site.settings import VIDEO_LIFETIME_DAYS
-from .send_video_to_ml import send_video_to_ml
+from .ml_service import predict_video
 from django.core.files.storage import default_storage
 from tempfile import NamedTemporaryFile
 from datetime import datetime
@@ -46,7 +46,7 @@ def process_video_task(analysis_id: int) -> None:
                 video_path = tmp_file.name
 
                 print(f"Processing video at {video_path} for analysis ID {analysis_id}")
-                results = send_video_to_ml(video_path)
+                results = predict_video(video_path)
 
         if not results:
             analysis.status = VideoAnalysis.Status.FAILED
