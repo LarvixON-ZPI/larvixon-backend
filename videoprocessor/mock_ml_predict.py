@@ -5,7 +5,6 @@ MOCK_CLASS_NAMES = [
     "morphine",
     "ethanol",
     "ketamine",
-    "morphine",
     "tetrodotoxin",
 ]
 
@@ -21,12 +20,12 @@ def mock_ml_predict(video_path: str) -> dict:
 
     mock_prediction = random.choice(MOCK_CLASS_NAMES)
 
-    confidence = random.uniform(0.7, 0.99)
+    confidence = random.uniform(70.0, 100.0)
 
     mock_scores = {cls_name: confidence for cls_name in MOCK_CLASS_NAMES}
 
     # distribute the remaining confidence among other classes
-    remaining_confidence = 1.0 - confidence
+    remaining_confidence = 100.0 - confidence
     other_classes = [c for c in MOCK_CLASS_NAMES if c != mock_prediction]
     if other_classes:
         per_other_class_confidence = remaining_confidence / len(other_classes)
