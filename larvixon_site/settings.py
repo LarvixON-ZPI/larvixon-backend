@@ -25,7 +25,9 @@ if DEBUG is False and not IS_TESTING:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-ML_ENDPOINT_URL = env("ML_ENDPOINT_URL", default="http://127.0.0.1:8001/predict")  # type: ignore
+ML_ENDPOINT_URL: str = env("ML_ENDPOINT_URL", default="http://127.0.0.1:8001/predict")  # type: ignore
+
+MOCK_ML: bool = env.bool("MOCK_ML", default=False)  # type: ignore
 
 DEFAULT_PAGE_SIZE = 6
 

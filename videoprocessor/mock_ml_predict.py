@@ -5,7 +5,6 @@ MOCK_CLASS_NAMES = [
     "morphine",
     "ethanol",
     "ketamine",
-    "morphine",
     "tetrodotoxin",
 ]
 
