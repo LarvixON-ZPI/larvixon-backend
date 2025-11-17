@@ -50,6 +50,7 @@ services:
       - AZURE_CONTAINER=${AZURE_CONTAINER}
       - CELERY_BROKER_URL=redis://redis:6379/0
       - ML_ENDPOINT_URL=${ML_ENDPOINT_URL}
+      - MOCK_ML=${MOCK_ML:-False}
     depends_on:
       db:
         condition: service_healthy
@@ -72,6 +73,7 @@ services:
       - AZURE_CONTAINER=${AZURE_CONTAINER}
       - CELERY_BROKER_URL=redis://redis:6379/0
       - ML_ENDPOINT_URL=${ML_ENDPOINT_URL}
+      - MOCK_ML=${MOCK_ML:-False}
     depends_on:
       db:
         condition: service_healthy
