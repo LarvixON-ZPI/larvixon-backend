@@ -24,7 +24,7 @@ class VideoAnalysisFilter(django_filters.FilterSet):
 
     substance_and_score = django_filters.CharFilter(
         method="filter_by_substance_and_min_score",
-        label="Substance Name for Min Score Filter (e.g., cocaine,0.9)",
+        label="Substance Name for Min Score Filter (e.g., cocaine,95.5)",
     )
 
     class Meta:
@@ -39,19 +39,15 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         }
 
     def filter_by_substance_and_min_score(self, queryset, name, value):
-        # example: 'cocaine,0.9'
+        # example: 'cocaine,95.5'
         try:
             substance_name, min_score_str = value.split(",")
             min_score = float(min_score_str)
         except (ValueError, AttributeError):
             return queryset
 
-        filtered_qs = queryset.filter(
-            analysis_results__substance__name_en__icontains=substance_name.strip()
-        )
-
-        annotated_qs = filtered_qs.annotate(
-            max_confidence=Max(
+        annotated_qs = queryset.annotate(
+            max_confidence_for_substance=Max(
                 "analysis_results__confidence_score",
                 filter=Q(
                     analysis_results__substance__name_en__icontains=substance_name.strip()
@@ -59,4 +55,4 @@ class VideoAnalysisFilter(django_filters.FilterSet):
             )
         )
 
-        return annotated_qs.filter(max_confidence__gte=min_score)
+        return annotated_qs.filter(max_confidence_for_substance__gte=min_score)
