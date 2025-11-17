@@ -71,10 +71,10 @@ class UserProfile(models.Model):
     def __str__(self) -> str:
         return f"{self.user.email} - Profile"
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         try:
-            if self.id:  # type: ignore
-                old_profile = UserProfile.objects.get(id=self.id)  # type: ignore
+            if self.pk:
+                old_profile: UserProfile = UserProfile.objects.get(pk=self.pk)
                 if (
                     old_profile.profile_picture
                     and old_profile.profile_picture != self.profile_picture
@@ -86,7 +86,7 @@ class UserProfile(models.Model):
 
         super(UserProfile, self).save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
+    def delete(self, *args, **kwargs) -> tuple[int, dict[str, int]]:
         if self.profile_picture:
             self.profile_picture.delete(save=False)
         return super().delete(*args, **kwargs)

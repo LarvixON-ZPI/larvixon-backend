@@ -65,7 +65,7 @@ class MFASetupView(APIView):
 
         img = qrcode.make(otp_uri)
         buf = BytesIO()
-        img.save(buf, format="PNG")
+        img.save(buf, format="PNG")  # type: ignore[call-arg]
         qr_code_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
 
         return Response(
@@ -97,6 +97,11 @@ class MFAVerifyView(APIView):
         is_valid, error_message, device = verify_mfa_code(
             request.user, code, is_confirmed_check=False
         )
+
+        if not device:
+            return Response(
+                {"detail": "No MFA device found."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         if is_valid:
             if not device.last_used_at:

@@ -9,7 +9,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True)
 
-    class Meta:  # type: ignore
+    class Meta:  # type: ignore[misc]
         model = User
         fields = (
             "username",
@@ -57,7 +57,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     phone_number = PhoneNumberField(allow_blank=True)
     profile_picture = serializers.ImageField(required=False, allow_null=True)
 
-    class Meta:  # type: ignore
+    class Meta:  # type: ignore[misc]
         model = UserProfile
         fields = (
             "profile_picture",
@@ -73,7 +73,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
 
-    class Meta:  # type: ignore
+    class Meta:  # type: ignore[misc]
         model = User
         fields = (
             "id",

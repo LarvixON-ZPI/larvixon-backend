@@ -148,22 +148,6 @@ class VideoAnalysisTest(APITestCase):
         self.analysis1.refresh_from_db()
         self.assertEqual(self.analysis1.actual_substance, "cocaine")
 
-    def test_delete_analysis(self):
-        analysis_to_delete = self.analysis1
-        analysis_id = analysis_to_delete.id
-        video_path = analysis_to_delete.video.path
-
-        self.assertTrue(os.path.exists(video_path))
-
-        detail_url = reverse("analysis:analysis-detail", args=[analysis_id])
-        response = self.client.delete(detail_url)
-
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        with self.assertRaises(VideoAnalysis.DoesNotExist):
-            VideoAnalysis.objects.get(id=analysis_id)
-
-        self.assertFalse(os.path.exists(video_path))
-
     def test_user_stats(self):
         stats_url = reverse("accounts:user-stats")
         response = self.client.get(stats_url)

@@ -1,4 +1,5 @@
 from django.core.validators import FileExtensionValidator
+from typing import TYPE_CHECKING, Any
 from django.db import models
 from accounts.models import User
 from accounts.utils import user_thumbnail_upload_to, user_video_upload_to
@@ -39,6 +40,9 @@ class VideoAnalysis(models.Model):
         choices=Status.choices,
         default=Status.PENDING,
     )
+    error_message: models.TextField = models.TextField(
+        blank=True, null=True, help_text="Error details when analysis fails"
+    )
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     completed_at: models.DateTimeField = models.DateTimeField(null=True, blank=True)
 
@@ -46,6 +50,9 @@ class VideoAnalysis(models.Model):
         max_length=100, blank=True, null=True
     )
     user_feedback: models.TextField = models.TextField(blank=True)
+
+    if TYPE_CHECKING:
+        analysis_results: Any
 
     def delete(self, *args, **kwargs):
         if self.video and self.video.name:

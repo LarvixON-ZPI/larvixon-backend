@@ -1,3 +1,4 @@
+from typing import Any
 from rest_framework import generics, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from analysis.models import VideoAnalysis
@@ -8,7 +9,7 @@ from ..filters import VideoAnalysisFilter
 class VideoAnalysisIdListView(generics.ListAPIView):
     serializer_class = VideoAnalysisIdSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filter_backends: Any = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = VideoAnalysisFilter
 
     ordering_fields = ["title", "created_at", "completed_at", "status"]

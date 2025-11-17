@@ -9,7 +9,7 @@ services:
       - media_volume:/app/media
 
   worker:
-    command: celery -A larvixon_site worker -l info
+    command: watchfiles 'celery -A larvixon_site worker -l info' .
     volumes:
       - .:/app
       - media_volume:/app/media
