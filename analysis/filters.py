@@ -54,4 +54,5 @@ class VideoAnalysisFilter(django_filters.FilterSet):
                 ),
             )
         )
+
         return annotated_qs.filter(max_confidence_for_substance__gte=min_score)
