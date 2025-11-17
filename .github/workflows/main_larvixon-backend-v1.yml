@@ -73,4 +73,5 @@ jobs:
         with:
           app-name: 'larvixon-backend-v1'
           slot-name: 'Production'
+          package: python-app
           
