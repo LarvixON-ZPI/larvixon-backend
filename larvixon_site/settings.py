@@ -22,8 +22,6 @@ SECRET_KEY: str = env_get("SECRET_KEY", default="django-insecure-fallback-key-dl
 DEBUG = env_get("DEBUG")
 IS_TESTING = "test" in sys.argv
 
-FORCE_HTTPS: bool = env_get.bool("FORCE_HTTPS", default=False)
-
 ALLOWED_HOSTS: list[str] = env_get.list(
     "ALLOWED_HOSTS",
     default=["larvixon-backend-v1.azurewebsites.net", "127.0.0.1", "localhost"],
@@ -269,7 +267,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_PAGINATION_CLASS": "larvixon_site.pagination.ForceHTTPSPaginator",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": DEFAULT_PAGE_SIZE,
 }
 
