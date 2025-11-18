@@ -10,7 +10,7 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         label="Substance Name (English, partial match)",
     )
 
-    substance_name = django_filters.CharFilter(
+    substance_name_pl = django_filters.CharFilter(
         field_name="analysis_results__substance__name_pl",
         lookup_expr="icontains",
         label="Substance Name (Polish, partial match)",
