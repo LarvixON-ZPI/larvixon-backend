@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     "accounts.apps.AccountsConfig",
     "analysis",
     "reports",
+    "patients",
     "storages",
 ]
 

@@ -3,6 +3,8 @@ from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 from drf_spectacular.types import OpenApiTypes
 from .models import Substance, VideoAnalysis, AnalysisResult
+from patients.serializers import PatientSerializer
+from patients.models import Patient
 
 
 class SubstanceSerializer(serializers.ModelSerializer):
@@ -32,12 +34,24 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
 
     video_name = serializers.SerializerMethodField()
 
+    patient_details = PatientSerializer(source="patient", read_only=True)
+
+    patient_id = serializers.PrimaryKeyRelatedField(
+        queryset=Patient.objects.all(),
+        source="patient",
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
+
     class Meta:  # type: ignore[misc]
         model = VideoAnalysis
         fields = (
             "id",
             "user",
             "title",
+            "patient_id",
+            "patient_details",
             "status",
             "error_message",
             "video_name",

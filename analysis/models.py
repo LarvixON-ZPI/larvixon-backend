@@ -19,10 +19,17 @@ class VideoAnalysis(models.Model):
     id: models.BigAutoField = models.BigAutoField(primary_key=True)
     title: models.CharField = models.CharField(
         max_length=255, default="Untitled"
-    )  # consider making this field unique for the user?
+    )  # TODO: change to description
 
     user: models.ForeignKey[User, User] = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="analyses"
+    )
+    patient = models.ForeignKey(
+        "patients.Patient",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="analyses",
     )
     video = models.FileField(
         upload_to=user_video_upload_to,

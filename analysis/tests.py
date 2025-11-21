@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase
 from larvixon_site import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from .models import Substance, AnalysisResult, User, VideoAnalysis
+from patients.models import Patient
 
 
 class VideoAnalysisTest(APITestCase):
@@ -25,6 +26,22 @@ class VideoAnalysisTest(APITestCase):
 
         self.analysis_list_url = reverse("analysis:analysis-list")
 
+        # Create Patients
+        self.patient1 = Patient.objects.create(
+            first_name="Jan",
+            last_name="Kowalski",
+            pesel="90010112345",
+            birth_date=datetime.date(1990, 1, 1),
+            sex=Patient.Sex.MALE,
+        )
+        self.patient2 = Patient.objects.create(
+            first_name="Anna",
+            last_name="Nowak",
+            pesel="95050554321",
+            birth_date=datetime.date(1995, 5, 5),
+            sex=Patient.Sex.FEMALE,
+        )
+
         # Create Substances
         self.substance1 = Substance.objects.create(name_en="Cocaine")
         self.substance2 = Substance.objects.create(name_en="Morphine")
@@ -40,7 +57,7 @@ class VideoAnalysisTest(APITestCase):
                 "test_video1.mp4", video_content, content_type="video/mp4"
             ),
             status=VideoAnalysis.Status.COMPLETED,
-            created_at=timezone.now() - datetime.timedelta(days=2),
+            patient=self.patient1,
         )
         AnalysisResult.objects.create(
             analysis=self.analysis1, substance=self.substance1, confidence_score=0.95
@@ -48,6 +65,9 @@ class VideoAnalysisTest(APITestCase):
         AnalysisResult.objects.create(
             analysis=self.analysis1, substance=self.substance2, confidence_score=0.55
         )
+
+        self.analysis1.created_at = timezone.now() - datetime.timedelta(days=2)
+        self.analysis1.save()
 
         # Analysis 2: Completed, has Morphine and some Cocaine
         self.analysis2 = VideoAnalysis.objects.create(
@@ -57,7 +77,7 @@ class VideoAnalysisTest(APITestCase):
                 "test_video2.mp4", video_content, content_type="video/mp4"
             ),
             status=VideoAnalysis.Status.COMPLETED,
-            created_at=timezone.now() - datetime.timedelta(days=1),
+            patient=self.patient2,
         )
         AnalysisResult.objects.create(
             analysis=self.analysis2, substance=self.substance2, confidence_score=0.80
@@ -65,6 +85,9 @@ class VideoAnalysisTest(APITestCase):
         AnalysisResult.objects.create(
             analysis=self.analysis2, substance=self.substance1, confidence_score=0.60
         )
+
+        self.analysis2.created_at = timezone.now() - datetime.timedelta(days=1)
+        self.analysis2.save()
 
         # Analysis 3: Pending, no results yet
         self.analysis3 = VideoAnalysis.objects.create(
@@ -75,6 +98,7 @@ class VideoAnalysisTest(APITestCase):
             ),
             status=VideoAnalysis.Status.PENDING,
             created_at=timezone.now(),
+            patient=None,
         )
 
         # Analysis 4: Belongs to other_user
@@ -111,6 +135,31 @@ class VideoAnalysisTest(APITestCase):
         new_analysis = VideoAnalysis.objects.get(id=response.data["id"])
         video_name = os.path.basename(new_analysis.video.name)
         self.assertEqual(video_name, "new_video.mp4")
+
+    def test_create_analysis_with_patient(self):
+        fake_video = SimpleUploadedFile(
+            "patient_video.mp4", b"content", content_type="video/mp4"
+        )
+        payload = {
+            "title": "Analysis for Patient 1",
+            "video": fake_video,
+            "patient_id": self.patient1.id,
+        }
+
+        response = self.client.post(self.analysis_list_url, payload, format="multipart")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        new_analysis = VideoAnalysis.objects.get(id=response.data["id"])
+        self.assertEqual(new_analysis.patient, self.patient1)
+
+    def test_get_analysis_detail_includes_patient(self):
+        detail_url = reverse("analysis:analysis-detail", args=[self.analysis1.id])
+        response = self.client.get(detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("patient_details", response.data)
+        self.assertEqual(response.data["patient_details"]["last_name"], "Kowalski")
+        self.assertEqual(response.data["patient_details"]["pesel"], "90010112345")
 
     def test_delete_analysis(self):
         analysis_to_delete = self.analysis1
@@ -202,6 +251,31 @@ class VideoAnalysisTest(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 0)
+
+    # --- Patient Filter Tests ---
+
+    def test_filter_by_patient_last_name(self):
+        response = self.client.get(
+            self.analysis_list_url, {"patient_last_name": "Kowalski"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["id"], self.analysis1.id)
+
+    def test_filter_by_patient_first_name(self):
+        response = self.client.get(
+            self.analysis_list_url, {"patient_first_name": "Anna"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["id"], self.analysis2.id)
+
+    def test_filter_by_patient_pesel(self):
+        response = self.client.get(
+            self.analysis_list_url, {"patient_pesel": "95050554321"}
+        )
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["id"], self.analysis2.id)
 
     # --- Ordering Tests ---
 

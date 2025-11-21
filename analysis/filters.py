@@ -38,6 +38,22 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         label="Substance Name (Polish) for Min Score Filter (e.g., kokaina,95.5)",
     )
 
+    patient_first_name = django_filters.CharFilter(
+        field_name="patient__first_name",
+        lookup_expr="icontains",
+        label="Patient First Name",
+    )
+
+    patient_last_name = django_filters.CharFilter(
+        field_name="patient__last_name",
+        lookup_expr="icontains",
+        label="Patient Last Name",
+    )
+
+    patient_pesel = django_filters.CharFilter(
+        field_name="patient__pesel", lookup_expr="exact", label="Patient PESEL"
+    )
+
     class Meta:
         model = VideoAnalysis
         fields = {
