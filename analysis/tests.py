@@ -290,7 +290,7 @@ class VideoAnalysisTest(APITestCase):
     def test_ordering_by_description_descending(self):
         response = self.client.get(self.analysis_list_url, {"ordering": "-description"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        descriptions = [item["titdescriptionle"] for item in response.data["results"]]
+        descriptions = [item["description"] for item in response.data["results"]]
         self.assertEqual(
             descriptions, ["Surprise Analysis", "Cocaine Test", "A Morphine Video"]
         )
