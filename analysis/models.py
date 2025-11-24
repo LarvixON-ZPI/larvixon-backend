@@ -17,9 +17,7 @@ class VideoAnalysis(models.Model):
         FAILED = "failed", "Failed"
 
     id: models.BigAutoField = models.BigAutoField(primary_key=True)
-    title: models.CharField = models.CharField(
-        max_length=255, default="Untitled"
-    )  # TODO: change to description
+    description: models.TextField = models.TextField(blank=True, default="")
 
     user: models.ForeignKey[User, User] = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="analyses"
@@ -73,7 +71,7 @@ class VideoAnalysis(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return f"{self.title} - {self.video.name} ({self.status})"
+        return f"{self.description} - {self.video.name} ({self.status})"
 
 
 class Substance(models.Model):
@@ -110,4 +108,4 @@ class AnalysisResult(models.Model):
         unique_together = ("analysis", "substance")
 
     def __str__(self) -> str:
-        return f"{self.analysis.title} - {self.substance.name_en} ({self.confidence_score})"
+        return f"{self.analysis.description} - {self.substance.name_en} ({self.confidence_score})"

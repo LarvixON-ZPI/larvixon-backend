@@ -59,7 +59,7 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         fields = {
             "status": ["exact"],
             "actual_substance": ["exact", "icontains"],
-            "title": ["exact", "icontains"],
+            "description": ["icontains"],
             "created_at": ["date__gte", "date__lte"],
             "completed_at": ["date__gte", "date__lte"],
             "actual_substance": ["exact", "icontains"],

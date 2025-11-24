@@ -81,7 +81,7 @@ class AnalysisReportView(APIView):
         elements.append(Spacer(1, 0.5 * cm))
 
         meta_data = f"""
-        <b>Title:</b> {analysis.title}<br/>
+        <b>Description:</b> {analysis.description}<br/>
         <b>Status:</b> {analysis.status.capitalize()}<br/>
         """
 
@@ -157,6 +157,6 @@ class AnalysisReportView(APIView):
 
         response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = (
-            f'attachment; filename="{analysis.title}_report.pdf"'
+            f'attachment; filename="{analysis.description}_report.pdf"'
         )
         return response

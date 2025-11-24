@@ -28,7 +28,7 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                 "type": "object",
                 "properties": {
                     "video": {"type": "string", "format": "binary"},
-                    "title": {"type": "string"},
+                    "description": {"type": "string"},
                     "patient_id": {
                         "type": "string",
                         "format": "uuid",
@@ -40,7 +40,7 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
     )
     def post(self, request, *args, **kwargs):
         video_file = request.FILES.get("video")
-        title = request.data.get("title")
+        description = request.data.get("description")
         patient_id = request.data.get("patient_id")
 
         if not video_file:
@@ -76,4 +76,4 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return self.save_video_file(request, video_file, title, patient_id)
+        return self.save_video_file(request, video_file, description, patient_id)

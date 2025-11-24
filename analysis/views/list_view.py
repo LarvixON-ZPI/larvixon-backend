@@ -12,7 +12,7 @@ class VideoAnalysisListView(generics.ListCreateAPIView):
     filter_backends: Any = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = VideoAnalysisFilter
 
-    ordering_fields = ["title", "created_at", "completed_at", "status"]
+    ordering_fields = ["description", "created_at", "completed_at", "status"]
 
     ordering = ["-created_at"]  # default ordering
 

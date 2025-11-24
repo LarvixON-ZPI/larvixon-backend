@@ -24,8 +24,7 @@ class BaseVideoUploadMixin:
             )
         return None
 
-    def save_video_file(self, request, file, title, patient_id=None):
-        title = (title or "Untitled").strip()
+    def save_video_file(self, request, file, description, patient_id=None):
         thumbnail_filename, thumbnail_content = (
             self._video_manager.extract_and_save_first_frame(file)
         )
@@ -36,7 +35,7 @@ class BaseVideoUploadMixin:
         try:
             with transaction.atomic():
                 analysis = VideoAnalysis.objects.create(
-                    user=request.user, title=title, patient_id=patient_id
+                    user=request.user, description=description, patient_id=patient_id
                 )
                 analysis.video.save(video_file_name, file, save=True)
                 analysis.thumbnail.save(

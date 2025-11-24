@@ -56,21 +56,21 @@ class TestVideoAnalysis(TestCase):
 
         request: Request = self.factory.post(
             "/api/analysis/",
-            {"title": "test_video_unittest.mp4", "video": video_file},
+            {"description": "test_video_unittest.mp4", "video": video_file},
             format="multipart",
         )
         force_authenticate(request, user=self.user)
         response: Response = VideoAnalysisListView.as_view()(request)
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["title"], "test_video_unittest.mp4")
+        self.assertEqual(response.data["description"], "test_video_unittest.mp4")
         self.assertEqual(response.data["status"], "pending")
 
     def test_get_analyses_list(self) -> None:
         video_file: SimpleUploadedFile = self._create_video_file()
         request: Request = self.factory.post(
             "/api/analysis/",
-            {"title": "test_video.mp4", "video": video_file},
+            {"description": "test_video.mp4", "video": video_file},
             format="multipart",
         )
         force_authenticate(request, user=self.user)
@@ -89,7 +89,7 @@ class TestVideoAnalysis(TestCase):
         video_file: SimpleUploadedFile = self._create_video_file()
         request: Request = self.factory.post(
             "/api/analysis/",
-            {"title": "feedback_test.mp4", "video": video_file},
+            {"description": "feedback_test.mp4", "video": video_file},
             format="multipart",
         )
         force_authenticate(request, user=self.user)
@@ -152,7 +152,7 @@ class TestAnalysisRetry(TestCase):
     ) -> VideoAnalysis:
         return VideoAnalysis.objects.create(
             user=user or self.user,
-            title="Failed Analysis",
+            description="Failed Analysis",
             video=self._create_video_file() if with_video else None,
             status=VideoAnalysis.Status.FAILED,
             error_message=error_message,
@@ -186,7 +186,7 @@ class TestAnalysisRetry(TestCase):
     def test_cannot_retry_non_failed_analysis(self) -> None:
         analysis: VideoAnalysis = VideoAnalysis.objects.create(
             user=self.user,
-            title="Completed Analysis",
+            description="Completed Analysis",
             video=self._create_video_file(),
             status=VideoAnalysis.Status.COMPLETED,
             completed_at=timezone.now(),

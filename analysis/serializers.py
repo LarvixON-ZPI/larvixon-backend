@@ -49,7 +49,7 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "user",
-            "title",
+            "description",
             "patient_id",
             "patient_details",
             "status",

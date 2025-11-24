@@ -52,7 +52,7 @@ class VideoAnalysisTest(APITestCase):
         # Analysis 1: Completed, has Cocaine and some Morphine
         self.analysis1 = VideoAnalysis.objects.create(
             user=self.user,
-            title="Cocaine Test",
+            description="Cocaine Test",
             video=SimpleUploadedFile(
                 "test_video1.mp4", video_content, content_type="video/mp4"
             ),
@@ -72,7 +72,7 @@ class VideoAnalysisTest(APITestCase):
         # Analysis 2: Completed, has Morphine and some Cocaine
         self.analysis2 = VideoAnalysis.objects.create(
             user=self.user,
-            title="A Morphine Video",
+            description="A Morphine Video",
             video=SimpleUploadedFile(
                 "test_video2.mp4", video_content, content_type="video/mp4"
             ),
@@ -92,7 +92,7 @@ class VideoAnalysisTest(APITestCase):
         # Analysis 3: Pending, no results yet
         self.analysis3 = VideoAnalysis.objects.create(
             user=self.user,
-            title="Surprise Analysis",
+            description="Surprise Analysis",
             video=SimpleUploadedFile(
                 "test_video3.mp4", video_content, content_type="video/mp4"
             ),
@@ -104,7 +104,7 @@ class VideoAnalysisTest(APITestCase):
         # Analysis 4: Belongs to other_user
         self.analysis4_other_user = VideoAnalysis.objects.create(
             user=self.other_user,
-            title="Other User's Video",
+            description="Other User's Video",
             video=SimpleUploadedFile(
                 "test_video4.mp4", video_content, content_type="video/mp4"
             ),
@@ -122,7 +122,7 @@ class VideoAnalysisTest(APITestCase):
         )
 
         payload = {
-            "title": "New Video Test",
+            "description": "New Video Test",
             "video": fake_video,
         }
 
@@ -141,7 +141,7 @@ class VideoAnalysisTest(APITestCase):
             "patient_video.mp4", b"content", content_type="video/mp4"
         )
         payload = {
-            "title": "Analysis for Patient 1",
+            "description": "Analysis for Patient 1",
             "video": fake_video,
             "patient_id": self.patient1.id,
         }
@@ -214,9 +214,9 @@ class VideoAnalysisTest(APITestCase):
         ids = {item["id"] for item in response.data["results"]}
         self.assertEqual(ids, {self.analysis1.id, self.analysis2.id})
 
-    def test_filter_by_title_icontains(self):
+    def test_filter_by_description_icontains(self):
         response = self.client.get(
-            self.analysis_list_url, {"title__icontains": "video"}
+            self.analysis_list_url, {"description__icontains": "video"}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
@@ -279,20 +279,20 @@ class VideoAnalysisTest(APITestCase):
 
     # --- Ordering Tests ---
 
-    def test_ordering_by_title_ascending(self):
-        response = self.client.get(self.analysis_list_url, {"ordering": "title"})
+    def test_ordering_by_description_ascending(self):
+        response = self.client.get(self.analysis_list_url, {"ordering": "description"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        titles = [item["title"] for item in response.data["results"]]
+        descriptions = [item["description"] for item in response.data["results"]]
         self.assertEqual(
-            titles, ["A Morphine Video", "Cocaine Test", "Surprise Analysis"]
+            descriptions, ["A Morphine Video", "Cocaine Test", "Surprise Analysis"]
         )
 
-    def test_ordering_by_title_descending(self):
-        response = self.client.get(self.analysis_list_url, {"ordering": "-title"})
+    def test_ordering_by_description_descending(self):
+        response = self.client.get(self.analysis_list_url, {"ordering": "-description"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        titles = [item["title"] for item in response.data["results"]]
+        descriptions = [item["titdescriptionle"] for item in response.data["results"]]
         self.assertEqual(
-            titles, ["Surprise Analysis", "Cocaine Test", "A Morphine Video"]
+            descriptions, ["Surprise Analysis", "Cocaine Test", "A Morphine Video"]
         )
 
     def test_default_ordering_created_at_descending(self):
@@ -310,7 +310,7 @@ class VideoAnalysisTest(APITestCase):
 
     def test_create_unauthenticated(self):
         self.client.force_authenticate(user=None)
-        payload = {"title": "Should Fail"}
+        payload = {"description": "Should Fail"}
         response = self.client.post(self.analysis_list_url, payload)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -332,7 +332,7 @@ class VideoAnalysisTest(APITestCase):
         detail_url = reverse(
             "analysis:analysis-detail", args=[self.analysis4_other_user.id]
         )
-        response = self.client.patch(detail_url, {"title": "hacked"})
+        response = self.client.patch(detail_url, {"description": "hacked"})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_user_cannot_delete_other_users_analysis(self):
@@ -349,7 +349,7 @@ class VideoAnalysisTest(APITestCase):
             "not_a_video.txt", b"this is text", content_type="text/plain"
         )
         payload = {
-            "title": "Text File Test",
+            "description": "Text File Test",
             "video": fake_text_file,
         }
         response = self.client.post(self.analysis_list_url, payload, format="multipart")

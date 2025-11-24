@@ -37,7 +37,7 @@ class ChunkedUploadView(BaseVideoUploadMixin, APIView):
         upload_id = request.headers.get("Upload-Id")
         filename = request.headers.get("Filename")
         content_range = request.headers.get("Content-Range")
-        title = request.headers.get("Title")
+        description = request.headers.get("Title")
 
         if not upload_id or not filename:
             return Response(
@@ -59,13 +59,13 @@ class ChunkedUploadView(BaseVideoUploadMixin, APIView):
                 return error
 
             if os.path.getsize(file_path) >= total_size:
-                return self._finalize_upload(request, file_path, filename, title)
+                return self._finalize_upload(request, file_path, filename, description)
 
         return Response({"message": "Chunk uploaded successfully."})
 
-    def _finalize_upload(self, request, file_path, filename, title):
+    def _finalize_upload(self, request, file_path, filename, description):
         with open(file_path, "rb") as f:
             django_file = File(f)
-            response = self.save_video_file(request, django_file, title)
+            response = self.save_video_file(request, django_file, description)
         os.remove(file_path)
         return response
