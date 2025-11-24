@@ -31,6 +31,8 @@ class Command(BaseCommand):
 
                 pesel = fake.pesel(sex=sex_choice)
 
+                document_id = fake.bothify(text="??#######").upper()
+
                 birth_date = fake.date_of_birth(minimum_age=18, maximum_age=90)
 
                 weight = round(random.uniform(50.0, 120.0), 1)
@@ -38,6 +40,7 @@ class Command(BaseCommand):
 
                 Patient.objects.create(
                     pesel=pesel,
+                    document_id=document_id,
                     first_name=first_name,
                     last_name=last_name,
                     birth_date=birth_date,

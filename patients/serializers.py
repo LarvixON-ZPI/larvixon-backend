@@ -10,6 +10,7 @@ class PatientSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "pesel",
+            "document_id",
             "first_name",
             "last_name",
             "birth_date",

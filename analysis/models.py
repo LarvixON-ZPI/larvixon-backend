@@ -71,7 +71,7 @@ class VideoAnalysis(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return f"{self.description} - {self.video.name} ({self.status})"
+        return f"{self.id} - {self.created_at} - {self.patient.id}"
 
 
 class Substance(models.Model):
@@ -108,4 +108,6 @@ class AnalysisResult(models.Model):
         unique_together = ("analysis", "substance")
 
     def __str__(self) -> str:
-        return f"{self.analysis.description} - {self.substance.name_en} ({self.confidence_score})"
+        return (
+            f"{self.analysis.id} - {self.substance.name_en} ({self.confidence_score})"
+        )

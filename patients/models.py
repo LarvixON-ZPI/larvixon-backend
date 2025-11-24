@@ -14,6 +14,8 @@ class Patient(models.Model):
         max_length=11, unique=True, db_index=True, null=True, blank=True
     )
 
+    document_id = models.CharField(max_length=20, unique=True, db_index=True)
+
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     birth_date = models.DateField()
@@ -26,7 +28,7 @@ class Patient(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        identifier = self.pesel if self.pesel else "No PESEL"
+        identifier = self.pesel if self.pesel else self.document_id
         return f"{self.first_name} {self.last_name} ({identifier})"
 
     @property
