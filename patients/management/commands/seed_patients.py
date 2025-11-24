@@ -7,10 +7,10 @@ from patients.models import Patient
 class Command(BaseCommand):
     help = "Generates patients with random data"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser) -> None:
         parser.add_argument("total", type=int, help="How many patients?")
 
-    def handle(self, *args, **kwargs):
+    def handle(self, *args, **kwargs) -> None:
         total = kwargs["total"]
         fake = Faker(["pl_PL"])
 
@@ -51,6 +51,7 @@ class Command(BaseCommand):
                 created_count += 1
 
             except Exception as e:
+                self.stderr.write(f"Error creating patient: {e}")
                 continue
 
         self.stdout.write(self.style.SUCCESS(f"Created {created_count} new patients"))

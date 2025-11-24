@@ -1,6 +1,8 @@
 import uuid
 from django.db import models
 from datetime import date
+from dateutil.relativedelta import relativedelta
+from django.core.validators import MinLengthValidator
 
 
 class Patient(models.Model):
@@ -11,7 +13,12 @@ class Patient(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     pesel = models.CharField(
-        max_length=11, unique=True, db_index=True, null=True, blank=True
+        max_length=11,
+        unique=True,
+        db_index=True,
+        null=True,
+        blank=True,
+        validators=[MinLengthValidator(4)],
     )
 
     document_id = models.CharField(max_length=20, unique=True, db_index=True)
@@ -32,12 +39,9 @@ class Patient(models.Model):
         return f"{self.first_name} {self.last_name} ({identifier})"
 
     @property
-    def age(self):
-        if not self.birth_date:
+    def age(self) -> int | None:
+        birth_date: date = self.birth_date
+        if not birth_date:
             return None
-        today = date.today()
-        return (
-            today.year
-            - self.birth_date.year
-            - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
-        )
+        today: date = date.today()
+        return relativedelta(today, birth_date).years
