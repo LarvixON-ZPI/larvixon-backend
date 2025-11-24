@@ -5,6 +5,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
+from patients.models import Patient
 from videoprocessor.views.base_video_upload_mixin import BaseVideoUploadMixin
 
 
@@ -28,6 +29,11 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                 "properties": {
                     "video": {"type": "string", "format": "binary"},
                     "title": {"type": "string"},
+                    "patient_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID of the patient (optional)",
+                    },
                 },
             }
         },
@@ -35,12 +41,26 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
     def post(self, request, *args, **kwargs):
         video_file = request.FILES.get("video")
         title = request.data.get("title")
+        patient_id = request.data.get("patient_id")
 
         if not video_file:
             return Response(
                 {"error": "No video file provided."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        if patient_id:
+            try:
+                if not Patient.objects.filter(id=patient_id).exists():
+                    return Response(
+                        {"error": f"Patient with ID {patient_id} not found."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+            except Exception:
+                return Response(
+                    {"error": "Invalid Patient ID format."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         error = self.validate_file_size(video_file.size)
         if error:
@@ -56,4 +76,4 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return self.save_video_file(request, video_file, title)
+        return self.save_video_file(request, video_file, title, patient_id)

@@ -52,13 +52,6 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
 
-CELERY_BEAT_SCHEDULE = {
-    "cleanup-old-analyses-videos-daily": {
-        "task": "analysis.tasks.cleanup_old_analyses_videos",
-        "schedule": crontab(hour=0, minute=0),  # every day at midnight
-    },
-}
-
 VIDEO_LIFETIME_DAYS: int = env_get.int("VIDEO_LIFETIME_DAYS", default=14)
 
 # Application definition
