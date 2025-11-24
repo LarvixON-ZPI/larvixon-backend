@@ -215,6 +215,6 @@ class AnalysisReportView(APIView):
 
         response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = (
-            f'attachment; filename="{analysis.description}_report.pdf"'
+            f'attachment; filename="analysis_{analysis.id}_report.pdf"'
         )
         return response
