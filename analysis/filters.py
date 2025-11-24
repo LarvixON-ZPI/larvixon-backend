@@ -54,6 +54,12 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         field_name="patient__pesel", lookup_expr="exact", label="Patient PESEL"
     )
 
+    patient_document_id = django_filters.CharFilter(
+        field_name="patient__document_id",
+        lookup_expr="exact",
+        label="Patient Document ID",
+    )
+
     class Meta:
         model = VideoAnalysis
         fields = {

@@ -31,6 +31,7 @@ class VideoAnalysisTest(APITestCase):
             first_name="Jan",
             last_name="Kowalski",
             pesel="90010112345",
+            document_id="XY9876543",
             birth_date=datetime.date(1990, 1, 1),
             sex=Patient.Sex.MALE,
         )
@@ -38,6 +39,7 @@ class VideoAnalysisTest(APITestCase):
             first_name="Anna",
             last_name="Nowak",
             pesel="95050554321",
+            document_id="AB1234567",
             birth_date=datetime.date(1995, 5, 5),
             sex=Patient.Sex.FEMALE,
         )
@@ -274,8 +276,17 @@ class VideoAnalysisTest(APITestCase):
         response = self.client.get(
             self.analysis_list_url, {"patient_pesel": "95050554321"}
         )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
         self.assertEqual(response.data["results"][0]["id"], self.analysis2.id)
+
+    def test_filter_by_patient_document_id(self):
+        response = self.client.get(
+            self.analysis_list_url, {"patient_document_id": "XY9876543"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["id"], self.analysis1.id)
 
     # --- Ordering Tests ---
 
