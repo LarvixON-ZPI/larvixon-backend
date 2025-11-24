@@ -71,7 +71,7 @@ class VideoAnalysis(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return f"{self.id} - {self.created_at} - {self.patient.id}"
+        return f"{self.id} - {self.created_at} - {self.patient.id if self.patient else 'None'}"
 
 
 class Substance(models.Model):
