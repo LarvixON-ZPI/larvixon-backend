@@ -93,8 +93,6 @@ class AnalysisReportView(APIView):
         normal.fontName = font_name
         title_style = styles["Title"]
         title_style.fontName = font_name_bold
-        heading_style = styles["Heading3"]
-        heading_style.fontName = font_name_bold
 
         logo_path = finders.find("logo_dark.png")
         if logo_path and os.path.exists(logo_path):
@@ -109,13 +107,34 @@ class AnalysisReportView(APIView):
             elements.append(Spacer(1, 0.5 * cm))
 
         elements.append(Paragraph(f"Analysis #{analysis.id} Report", title_style))
+        elements.append(Spacer(1, 0.5 * cm))
+
+        meta_data = f"""
+        <b>Description:</b> {analysis.description}<br/>
+        <b>Status:</b> {analysis.status.capitalize()}<br/>
+        """
+
+        if analysis.user.first_name or analysis.user.last_name:
+            full_name = f"{analysis.user.first_name} {analysis.user.last_name}".strip()
+            meta_data += f"<b>Commissioned by:</b> {full_name}<br/>"
+        else:
+            meta_data += f"<b>Commissioned by:</b> {analysis.user.username}<br/>"
+
+        meta_data += (
+            f"<b>Created:</b> {analysis.created_at.strftime('%Y-%m-%d %H:%M')}<br/>"
+        )
+
+        if analysis.completed_at:
+            meta_data += f"<b>Completed:</b> {analysis.completed_at.strftime('%Y-%m-%d %H:%M')}<br/>"
+
+        elements.append(Paragraph(meta_data, normal))
+        elements.append(Spacer(1, 1 * cm))
 
         if analysis.patient:
             patient = analysis.patient
 
-            elements.append(Paragraph("Patient Details", heading_style))
-
             patient_info = f"""
+            <b>Patient Details: </b><br/>
             <b>Name:</b> {patient.first_name} {patient.last_name}<br/>
             <b>Document ID:</b> {patient.document_id}<br/>
             """
@@ -139,26 +158,6 @@ class AnalysisReportView(APIView):
             elements.append(Paragraph(patient_info, normal))
 
         elements.append(Spacer(1, 0.5 * cm))
-
-        meta_data = f"""
-        <b>Description:</b> {analysis.description}<br/>
-        <b>Status:</b> {analysis.status.capitalize()}<br/>
-        """
-
-        if analysis.user.first_name or analysis.user.last_name:
-            full_name = f"{analysis.user.first_name} {analysis.user.last_name}".strip()
-            meta_data += f"<b>Commissioned by:</b> {full_name}<br/>"
-        else:
-            meta_data += f"<b>Commissioned by:</b> {analysis.user.username}<br/>"
-
-        meta_data += (
-            f"<b>Created:</b> {analysis.created_at.strftime('%Y-%m-%d %H:%M')}<br/>"
-        )
-
-        if analysis.completed_at:
-            meta_data += f"<b>Completed:</b> {analysis.completed_at.strftime('%Y-%m-%d %H:%M')}<br/>"
-
-        elements.append(Paragraph(meta_data, normal))
 
         if analysis.actual_substance:
             elements.append(
