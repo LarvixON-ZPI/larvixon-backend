@@ -40,7 +40,7 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
     )
     def post(self, request, *args, **kwargs):
         video_file = request.FILES.get("video")
-        description = request.data.get("description")
+        description = request.data.get("description", "")
         patient_id = request.data.get("patient_id")
 
         if not video_file:

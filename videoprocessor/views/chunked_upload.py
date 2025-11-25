@@ -37,7 +37,7 @@ class ChunkedUploadView(BaseVideoUploadMixin, APIView):
         upload_id = request.headers.get("Upload-Id")
         filename = request.headers.get("Filename")
         content_range = request.headers.get("Content-Range")
-        description = request.headers.get("Title")
+        description = request.headers.get("Title", "")
 
         if not upload_id or not filename:
             return Response(
