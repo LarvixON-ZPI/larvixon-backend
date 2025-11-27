@@ -10,21 +10,9 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("analysis", "0010_add_polish_translations"),
-        ("patients", "0001_initial"),
     ]
 
     operations = [
-        migrations.AddField(
-            model_name="videoanalysis",
-            name="patient",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="analyses",
-                to="patients.patient",
-            ),
-        ),
         migrations.AlterField(
             model_name="videoanalysis",
             name="video",

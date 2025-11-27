@@ -5,7 +5,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
-from patients.models import Patient
+from patients.services import patient_service
 from videoprocessor.views.base_video_upload_mixin import BaseVideoUploadMixin
 
 
@@ -29,10 +29,10 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                 "properties": {
                     "video": {"type": "string", "format": "binary"},
                     "description": {"type": "string"},
-                    "patient_id": {
+                    "patient_guid": {
                         "type": "string",
                         "format": "uuid",
-                        "description": "UUID of the patient (optional)",
+                        "description": "GUID of the patient from Patient Service (optional)",
                     },
                 },
             }
@@ -41,7 +41,7 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
     def post(self, request, *args, **kwargs):
         video_file = request.FILES.get("video")
         description = request.data.get("description", "")
-        patient_id = request.data.get("patient_id")
+        patient_guid = request.data.get("patient_guid")
 
         if not video_file:
             return Response(
@@ -49,16 +49,17 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if patient_id:
+        if patient_guid:
             try:
-                if not Patient.objects.filter(id=patient_id).exists():
+                patient = patient_service.get_patient_by_guid(patient_guid)
+                if not patient:
                     return Response(
-                        {"error": f"Patient with ID {patient_id} not found."},
+                        {"error": f"Patient with GUID {patient_guid} not found."},
                         status=status.HTTP_404_NOT_FOUND,
                     )
             except Exception:
                 return Response(
-                    {"error": "Invalid Patient ID format."},
+                    {"error": "Invalid Patient GUID format."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -76,4 +77,4 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return self.save_video_file(request, video_file, description, patient_id)
+        return self.save_video_file(request, video_file, description, patient_guid)

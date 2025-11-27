@@ -1,5 +1,7 @@
 import django_filters
 from django.db.models import Max, Q
+
+from patients.services import patient_service
 from .models import VideoAnalysis
 
 
@@ -38,26 +40,9 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         label="Substance Name (Polish) for Min Score Filter (e.g., kokaina,95.5)",
     )
 
-    patient_first_name = django_filters.CharFilter(
-        field_name="patient__first_name",
-        lookup_expr="icontains",
-        label="Patient First Name",
-    )
-
-    patient_last_name = django_filters.CharFilter(
-        field_name="patient__last_name",
-        lookup_expr="icontains",
-        label="Patient Last Name",
-    )
-
-    patient_pesel = django_filters.CharFilter(
-        field_name="patient__pesel", lookup_expr="exact", label="Patient PESEL"
-    )
-
-    patient_document_id = django_filters.CharFilter(
-        field_name="patient__document_id",
-        lookup_expr="exact",
-        label="Patient Document ID",
+    patient_search = django_filters.CharFilter(
+        method="filter_by_patient_search",
+        label="Patient Search (searches first name, last name, PESEL)",
     )
 
     class Meta:
@@ -108,3 +93,19 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         )
 
         return annotated_qs.filter(max_confidence_for_substance__gte=min_score)
+
+    def filter_by_patient_search(self, queryset, name, value):
+        if not value:
+            return queryset
+
+        patients = patient_service.search_patients(search_term=value)
+
+        if not patients:
+            return queryset.none()
+
+        patient_guids = [p["internal_guid"] for p in patients if p.get("internal_guid")]
+
+        if not patient_guids:
+            return queryset.none()
+
+        return queryset.filter(patient_guid__in=patient_guids)

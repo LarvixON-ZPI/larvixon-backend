@@ -54,6 +54,11 @@ CELERY_TIMEZONE = "UTC"
 
 VIDEO_LIFETIME_DAYS: int = env_get.int("VIDEO_LIFETIME_DAYS", default=14)
 
+PATIENT_SERVICE_URL: str = env_get(
+    "PATIENT_SERVICE_URL", default="http://localhost:8001/api/v1"
+)
+MOCK_PATIENT_SERVICE: bool = env_get("MOCK_PATIENT_SERVICE", default=True)
+
 # Application definition
 INSTALLED_APPS = [
     "django.contrib.admin",

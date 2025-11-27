@@ -22,12 +22,10 @@ class VideoAnalysis(models.Model):
     user: models.ForeignKey[User, User] = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="analyses"
     )
-    patient = models.ForeignKey(
-        "patients.Patient",
-        on_delete=models.SET_NULL,
+    patient_guid = models.UUIDField(
         null=True,
         blank=True,
-        related_name="analyses",
+        db_index=True,
     )
     video = models.FileField(
         upload_to=user_video_upload_to,
@@ -71,7 +69,7 @@ class VideoAnalysis(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return f"{self.id} - {self.created_at} - {self.patient.id if self.patient else 'None'}"
+        return f"{self.id} - {self.created_at} - {self.patient_guid or 'None'}"
 
 
 class Substance(models.Model):
