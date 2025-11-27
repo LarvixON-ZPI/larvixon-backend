@@ -45,7 +45,7 @@ def _generate_other_confidences(
     values: list[float] = [
         random.uniform(0, 1) for _ in range(len(MOCK_SUBSTANCES) - 1)
     ]
-    suma: float = sum(values)
+    total: float = sum(values)
 
     remaining_confidence: float = 100.0 - confidence
 
@@ -53,7 +53,7 @@ def _generate_other_confidences(
         c for c in MOCK_SUBSTANCES if c != mock_predicted_substance
     ]
     for i, substance in enumerate(other_classes):
-        mock_confidences[substance] = values[i] / suma * remaining_confidence
+        mock_confidences[substance] = values[i] / total * remaining_confidence
     return mock_confidences
 
 

@@ -1,8 +1,13 @@
+import logging
+
 import django_filters
 from django.db.models import Max, Q
 
 from patients.services import patient_service
+from patients.errors import PatientServiceError
 from .models import VideoAnalysis
+
+logger = logging.getLogger(__name__)
 
 
 class VideoAnalysisFilter(django_filters.FilterSet):
@@ -98,7 +103,11 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         if not value:
             return queryset
 
-        patients = patient_service.search_patients(search_term=value)
+        try:
+            patients = patient_service.search_patients(search_term=value)
+        except PatientServiceError as e:
+            logger.error(f"Patient service error during search: {e}")
+            raise
 
         if not patients:
             return queryset.none()

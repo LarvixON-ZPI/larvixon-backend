@@ -57,7 +57,9 @@ VIDEO_LIFETIME_DAYS: int = env_get.int("VIDEO_LIFETIME_DAYS", default=14)
 PATIENT_SERVICE_URL: str = env_get(
     "PATIENT_SERVICE_URL", default="http://localhost:8001/api/v1"
 )
-MOCK_PATIENT_SERVICE: bool = env_get("MOCK_PATIENT_SERVICE", default=True)
+MOCK_PATIENT_SERVICE: bool = env_get("MOCK_PATIENT_SERVICE", default=False)
+
+REDIS_URL: str = env_get("REDIS_URL", default="redis://localhost:6379/1")
 
 # Application definition
 INSTALLED_APPS = [
@@ -124,7 +126,7 @@ TEMPLATES = [
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://localhost:6379/1",
+        "LOCATION": REDIS_URL,
     }
 }
 

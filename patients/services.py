@@ -4,6 +4,10 @@ import logging
 from django.core.cache import cache
 
 from larvixon_site.settings import MOCK_PATIENT_SERVICE, PATIENT_SERVICE_URL
+from patients.errors import (
+    PatientServiceUnavailableError,
+    PatientServiceResponseError,
+)
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -51,10 +55,14 @@ class PatientService:
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Error communicating with Patient Service: {e}")
-            return []
+            raise PatientServiceUnavailableError(
+                f"Patient service unavailable: {e}"
+            ) from e
         except Exception as e:
             logger.error(f"Unexpected error in search_patients: {e}")
-            return []
+            raise PatientServiceResponseError(
+                f"Unexpected error in patient service: {e}"
+            ) from e
 
     def get_patient_by_guid(self, guid: str) -> Optional[dict]:
         if self.mock_mode:
@@ -80,10 +88,14 @@ class PatientService:
             return patient
         except requests.exceptions.RequestException as e:
             logger.error(f"Error communicating with Patient Service: {e}")
-            return None
+            raise PatientServiceUnavailableError(
+                f"Patient service unavailable: {e}"
+            ) from e
         except Exception as e:
             logger.error(f"Unexpected error in get_patient_by_guid: {e}")
-            return None
+            raise PatientServiceResponseError(
+                f"Unexpected error processing patient data: {e}"
+            ) from e
 
     def _parse_fhir_patient(self, fhir_resource: dict) -> dict:
         pesel = None

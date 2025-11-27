@@ -9,7 +9,7 @@ from larvixon_site import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from .models import Substance, AnalysisResult, User, VideoAnalysis
 import uuid
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from django.test import override_settings
 
 

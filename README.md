@@ -145,7 +145,6 @@ docker-compose up -d
 # To create a superuser and seed the database:
 docker-compose exec backend python manage.py createsuperuser
 docker-compose exec backend python manage.py seed
-docker-compose exec backend python manage.py seed_patients 10
 ```
 
 The server will start at `http://127.0.0.1:8000`
@@ -160,7 +159,6 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 # To create a superuser and seed the database:
 docker-compose exec backend python manage.py createsuperuser
 docker-compose exec backend python manage.py seed
-docker-compose exec backend python manage.py seed_substances
 ```
 
 You should then make requests to:

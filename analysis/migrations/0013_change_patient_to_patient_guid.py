@@ -16,7 +16,6 @@ class Migration(migrations.Migration):
             field=models.UUIDField(
                 blank=True,
                 db_index=True,
-                help_text="GUID of the patient from the Patient Service",
                 null=True,
             ),
         ),

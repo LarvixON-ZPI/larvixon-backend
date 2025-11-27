@@ -24,7 +24,7 @@ class BaseVideoUploadMixin:
             )
         return None
 
-    def save_video_file(self, request, file, description, patient_guid=None):
+    def save_video_file(self, request, file, description, patient_guid):
         thumbnail_filename, thumbnail_content = (
             self._video_manager.extract_and_save_first_frame(file)
         )
