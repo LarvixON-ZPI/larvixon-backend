@@ -42,9 +42,7 @@ class AnalysisReportView(APIView):
         self, pk, user
     ) -> VideoAnalysis | Literal["Not found"] | Literal["Not completed"]:
         try:
-            analysis: VideoAnalysis = VideoAnalysis.objects.select_related(
-                "patient"
-            ).get(pk=pk, user=user)
+            analysis: VideoAnalysis = VideoAnalysis.objects.get(pk=pk, user=user)
         except VideoAnalysis.DoesNotExist:
             return "Not found"
 

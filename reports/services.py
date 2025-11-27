@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.contrib.staticfiles import finders
 from reportlab.lib.pagesizes import A4
+from patients.services import patient_service
 from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.platypus import (
@@ -126,33 +127,39 @@ class AnalysisReportPDFGenerator:
         self.elements.append(Spacer(1, 1 * cm))
 
     def _add_patient_info(self):
-        if not self.analysis.patient:
+        if not self.analysis.patient_guid:
+            return
+
+        patient = patient_service.get_patient_by_guid(str(self.analysis.patient_guid))
+        if not patient:
             return
 
         normal = self.styles["Normal"]
-        patient = self.analysis.patient
 
         patient_info = f"""
         <b>Patient Details: </b><br/>
-        <b>Name:</b> {patient.first_name} {patient.last_name}<br/>
-        <b>Document ID:</b> {patient.document_id}<br/>
+        <b>Name:</b> {patient.get('first_name', '')} {patient.get('last_name', '')}<br/>
         """
 
-        if patient.pesel:
-            patient_info += f"<b>PESEL:</b> {patient.pesel}<br/>"
+        if patient.get("pesel"):
+            patient_info += f"<b>PESEL:</b> {patient['pesel']}<br/>"
 
-        patient_info += f"<b>Sex:</b> {patient.get_sex_display()}<br/>"
-
-        if patient.age is not None:
-            patient_info += (
-                f"<b>Age:</b> {patient.age} (born {patient.birth_date})<br/>"
+        if patient.get("gender"):
+            gender_display = (
+                "Male"
+                if patient["gender"] == "male"
+                else "Female" if patient["gender"] == "female" else patient["gender"]
             )
+            patient_info += f"<b>Gender:</b> {gender_display}<br/>"
 
-        if patient.weight_kg:
-            patient_info += f"<b>Weight:</b> {patient.weight_kg} kg<br/>"
+        if patient.get("birth_date"):
+            patient_info += f"<b>Birth Date:</b> {patient['birth_date']}<br/>"
 
-        if patient.height_cm:
-            patient_info += f"<b>Height:</b> {patient.height_cm} cm<br/>"
+        if patient.get("phone"):
+            patient_info += f"<b>Phone:</b> {patient['phone']}<br/>"
+
+        if patient.get("email"):
+            patient_info += f"<b>Email:</b> {patient['email']}<br/>"
 
         self.elements.append(Paragraph(patient_info, normal))
         self.elements.append(Spacer(1, 0.5 * cm))

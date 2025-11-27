@@ -8,7 +8,6 @@ from rest_framework.test import APITestCase
 from io import BytesIO
 
 from analysis.models import VideoAnalysis, Substance, AnalysisResult
-from patients.models import Patient
 from reports.services import AnalysisReportPDFGenerator
 from accounts.models import User
 
@@ -31,7 +30,6 @@ class ReportBasicTests(APITestCase):
         VideoAnalysis.objects.all().delete()
         User.objects.all().delete()
         Substance.objects.all().delete()
-        Patient.objects.all().delete()
 
     def test_report_not_found(self):
 
@@ -229,17 +227,8 @@ class ReportComprehensiveTest(APITestCase):
         )
         self.client.force_authenticate(user=self.user)
 
-        # Create patient with full details
-        self.patient = Patient.objects.create(
-            pesel="90010112345",
-            document_id="ABC123456",
-            first_name="Jane",
-            last_name="Doe",
-            birth_date=date(1990, 1, 1),
-            sex=Patient.Sex.FEMALE,
-            weight_kg=65.5,
-            height_cm=170,
-        )
+        # Mock patient GUID for testing
+        self.patient_guid = "00000000-0000-0000-0000-000000000001"
 
         # Create substances
         self.cocaine = Substance.objects.create(name_en="Cocaine", name_pl="Kokaina")
@@ -254,18 +243,30 @@ class ReportComprehensiveTest(APITestCase):
         VideoAnalysis.objects.all().delete()
         AnalysisResult.objects.all().delete()
         Substance.objects.all().delete()
-        Patient.objects.all().delete()
         User.objects.all().delete()
 
+    @patch("reports.services.patient_service.get_patient_by_guid")
     @patch("reports.services.finders.find")
-    def test_comprehensive_report_generation_happy_path(self, mock_find):
+    def test_comprehensive_report_generation_happy_path(
+        self, mock_find, mock_get_patient
+    ):
         # Mock static file finding to avoid filesystem dependencies
         mock_find.return_value = None
+
+        # Mock patient service to return patient data
+        mock_get_patient.return_value = {
+            "internal_guid": self.patient_guid,
+            "pesel": "90010112345",
+            "first_name": "Jane",
+            "last_name": "Doe",
+            "birth_date": "1990-01-01",
+            "gender": "female",
+        }
 
         # Create completed analysis with all fields
         analysis = VideoAnalysis.objects.create(
             user=self.user,
-            patient=self.patient,
+            patient_guid=self.patient_guid,
             description="Full substance screening test",
             status=VideoAnalysis.Status.COMPLETED,
             actual_substance="Cocaine",
@@ -312,13 +313,8 @@ class ReportComprehensiveTest(APITestCase):
         self.assertTrue(pdf_bytes.startswith(b"%PDF"))
 
         # Verify analysis was fetched correctly with related data
-        analysis_from_db = VideoAnalysis.objects.select_related("patient").get(
-            pk=analysis.id
-        )
-        self.assertEqual(analysis_from_db.patient.first_name, "Jane")
-        self.assertEqual(analysis_from_db.patient.last_name, "Doe")
-        self.assertEqual(analysis_from_db.patient.pesel, "90010112345")
-        self.assertEqual(analysis_from_db.patient.age, 35)  # Age calculation
+        analysis_from_db = VideoAnalysis.objects.get(pk=analysis.id)
+        self.assertEqual(str(analysis_from_db.patient_guid), self.patient_guid)
         self.assertEqual(analysis_from_db.user.first_name, "John")
         self.assertEqual(analysis_from_db.user.last_name, "Smith")
 
@@ -339,8 +335,3 @@ class ReportComprehensiveTest(APITestCase):
         # Verify feedback fields
         self.assertEqual(analysis.actual_substance, "Cocaine")
         self.assertIn("symptoms", analysis.user_feedback)
-
-        # Verify patient details
-        self.assertEqual(analysis.patient.weight_kg, 65.5)
-        self.assertEqual(analysis.patient.height_cm, 170)
-        self.assertEqual(analysis.patient.sex, Patient.Sex.FEMALE)
