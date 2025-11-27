@@ -1,6 +1,7 @@
 import requests
 from typing import Optional, List
 import logging
+from django.core.cache import cache
 
 from larvixon_site.settings import MOCK_PATIENT_SERVICE, PATIENT_SERVICE_URL
 
@@ -8,6 +9,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 PESEL_ID = "http://hl7.org/fhir/sid/pesel"
 TIMEOUT_SECONDS = 5
+CACHE_TIME_SECONDS = 60
 
 
 class PatientService:
@@ -18,6 +20,11 @@ class PatientService:
     def search_patients(self, search_term: Optional[str] = None) -> List[dict]:
         if self.mock_mode:
             return self._mock_search_patients(search_term)
+
+        cache_key = f"patient_search:{search_term or ''}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
 
         try:
             url: str = f"{self.base_url}/api/patients"
@@ -38,6 +45,8 @@ class PatientService:
                 resource: dict = entry.get("resource", {})
                 patients.append(self._parse_fhir_patient(resource))
 
+            cache.set(cache_key, patients, CACHE_TIME_SECONDS)
+
             return patients
 
         except requests.exceptions.RequestException as e:
@@ -51,16 +60,24 @@ class PatientService:
         if self.mock_mode:
             return self._mock_get_patient(guid)
 
-        url: str = f"{self.base_url}/api/patients/{guid}"
+        cache_key = f"patient:{guid}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
 
         try:
+            url: str = f"{self.base_url}/api/patients/{guid}"
             response: requests.Response = requests.get(url, timeout=TIMEOUT_SECONDS)
             if response.status_code == 404:
                 return None
             response.raise_for_status()
 
             data = response.json()
-            return self._parse_fhir_patient(data)
+            patient = self._parse_fhir_patient(data)
+
+            cache.set(cache_key, patient, CACHE_TIME_SECONDS)
+
+            return patient
         except requests.exceptions.RequestException as e:
             logger.error(f"Error communicating with Patient Service: {e}")
             return None

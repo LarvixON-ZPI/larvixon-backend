@@ -49,10 +49,10 @@ class VideoAnalysisTest(APITestCase):
 
         # Patch the patient service methods
         self.patcher_get_patient = patch(
-            "analysis.patient_service.patient_service.get_patient_by_guid"
+            "patients.services.patient_service.get_patient_by_guid"
         )
         self.patcher_search_patients = patch(
-            "analysis.patient_service.patient_service.search_patients"
+            "patients.services.patient_service.search_patients"
         )
 
         self.mock_get_patient = self.patcher_get_patient.start()
