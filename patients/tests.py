@@ -15,6 +15,7 @@ from patients.errors import (
     PatientServiceUnavailableError,
     PatientServiceResponseError,
 )
+from larvixon_site.settings import MOCK_PATIENT_SERVICE
 from tests.common import TestFixtures, run_tests
 
 
@@ -30,27 +31,27 @@ class TestPatientViews(TestCase):
             password="testpass123",
         )
         cache.clear()
+        patient_service.mock_mode = True
 
     def tearDown(self) -> None:
         User.objects.all().delete()
         cache.clear()
+        patient_service.mock_mode = MOCK_PATIENT_SERVICE
 
     def test_get_patient_success(self) -> None:
         """Test successful patient retrieval with valid GUID."""
         guid = "00000000-0000-0000-0000-000000000001"
 
-        # Ensure mock mode is enabled for this test
-        with patch.object(patient_service, "mock_mode", True):
-            request: Request = self.factory.get(f"/api/patients/{guid}/")
-            force_authenticate(request, user=self.user)
+        request: Request = self.factory.get(f"/api/patients/{guid}/")
+        force_authenticate(request, user=self.user)
 
-            response: Response = GetPatientView.as_view()(request, guid=guid)
+        response: Response = GetPatientView.as_view()(request, guid=guid)
 
-            self.assertEqual(response.status_code, 200)
-            self.assertIn("internal_guid", response.data)
-            self.assertIn("first_name", response.data)
-            self.assertIn("last_name", response.data)
-            self.assertEqual(response.data["internal_guid"], guid)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("internal_guid", response.data)
+        self.assertIn("first_name", response.data)
+        self.assertIn("last_name", response.data)
+        self.assertEqual(response.data["internal_guid"], guid)
 
     def test_get_patient_not_found(self) -> None:
         """Test patient retrieval with non-existent GUID."""
@@ -91,11 +92,9 @@ class TestPatientViews(TestCase):
         request: Request = self.factory.get("/api/patients//")
         force_authenticate(request, user=self.user)
 
-        # Empty GUID routes to the list view, so expect 200
         response: Response = GetPatientView.as_view()(request, guid="")
 
-        # This should return the mock patient in mock mode
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 404)
 
     def test_get_patient_unauthenticated(self) -> None:
         """Test patient retrieval without authentication."""
@@ -197,7 +196,7 @@ class TestPatientService(TestCase):
     def test_parse_fhir_patient_complete_data(self) -> None:
         """Test parsing complete FHIR patient resource."""
         fhir_resource = {
-            "id": "patient-12345",
+            "internal_guid": "patient-12345",
             "identifier": [
                 {"system": "http://hl7.org/fhir/sid/pesel", "value": "90010112345"}
             ],
@@ -220,7 +219,7 @@ class TestPatientService(TestCase):
 
         result = self.service._parse_fhir_patient(fhir_resource)
 
-        self.assertEqual(result["internal_guid"], "12345")
+        self.assertEqual(result["internal_guid"], "patient-12345")
         self.assertEqual(result["pesel"], "90010112345")
         self.assertEqual(result["first_name"], "Jan")
         self.assertEqual(result["last_name"], "Kowalski")
@@ -236,7 +235,7 @@ class TestPatientService(TestCase):
     def test_parse_fhir_patient_minimal_data(self) -> None:
         """Test parsing FHIR patient with minimal data."""
         fhir_resource = {
-            "id": "patient-minimal",
+            "internal_guid": "minimal",
             "name": [],
             "identifier": [],
             "telecom": [],
@@ -264,7 +263,7 @@ class TestPatientService(TestCase):
 
         result = self.service._parse_fhir_patient(fhir_resource)
 
-        self.assertEqual(result["internal_guid"], "")
+        self.assertEqual(result["internal_guid"], None)
         self.assertIsNone(result["pesel"])
         self.assertEqual(result["first_name"], "")
         self.assertEqual(result["last_name"], "")
@@ -272,7 +271,7 @@ class TestPatientService(TestCase):
     def test_parse_fhir_patient_no_pesel_identifier(self) -> None:
         """Test parsing FHIR patient without PESEL identifier."""
         fhir_resource = {
-            "id": "patient-no-pesel",
+            "internal_guid": "patient-no-pesel",
             "identifier": [{"system": "http://other-system.com", "value": "OTHER123"}],
         }
 
@@ -283,7 +282,7 @@ class TestPatientService(TestCase):
     def test_parse_fhir_patient_id_without_prefix(self) -> None:
         """Test parsing FHIR patient with ID that doesn't have patient- prefix."""
         fhir_resource = {
-            "id": "12345-no-prefix",
+            "internal_guid": "12345-no-prefix",
         }
 
         result = self.service._parse_fhir_patient(fhir_resource)
@@ -387,7 +386,7 @@ class TestPatientService(TestCase):
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            "id": f"patient-{guid}",
+            "internal_guid": guid,
             "name": [{"family": "Test", "given": ["Patient"]}],
             "identifier": [],
         }
@@ -464,13 +463,13 @@ class TestPatientService(TestCase):
             "entry": [
                 {
                     "resource": {
-                        "id": "patient-1",
+                        "internal_guid": "patient-1",
                         "name": [{"family": "Doe", "given": ["John"]}],
                     }
                 },
                 {
                     "resource": {
-                        "id": "patient-2",
+                        "internal_guid": "patient-2",
                         "name": [{"family": "Smith", "given": ["Jane"]}],
                     }
                 },
@@ -531,7 +530,7 @@ class TestPatientService(TestCase):
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            "id": f"patient-{guid}",
+            "internal_guid": guid,
             "name": [{"family": "Cached", "given": ["Patient"]}],
         }
         mock_get.return_value = mock_response
@@ -559,7 +558,7 @@ class TestPatientService(TestCase):
             "entry": [
                 {
                     "resource": {
-                        "id": "patient-1",
+                        "internal_guid": "patient-1",
                         "name": [{"family": "Cached", "given": ["Test"]}],
                     }
                 }

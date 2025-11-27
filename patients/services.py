@@ -141,13 +141,7 @@ class PatientService:
             postal_code = address.get("postalCode")
             country = address.get("country")
 
-        # todo: We need to get internal_guid from somewhere
-        # For now, use the FHIR id field
-        fhir_id = fhir_resource.get("id", "")
-        if fhir_id.startswith("patient-"):
-            internal_guid = fhir_id[len("patient-") :]
-        else:
-            internal_guid = fhir_id
+        internal_guid = fhir_resource.get("internal_guid")
 
         return {
             "internal_guid": internal_guid,
