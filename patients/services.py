@@ -97,6 +97,67 @@ class PatientService:
                 f"Unexpected error processing patient data: {e}"
             ) from e
 
+    def get_patients_by_guids(self, guids: List[str]) -> dict[str, dict]:
+        if not guids:
+            return {}
+
+        if self.mock_mode:
+            return self._mock_get_patients_by_guids(guids)
+
+        results = {}
+        cache_keys = {guid: f"patient:{guid}" for guid in guids}
+        cached_patients = cache.get_many(cache_keys.values())
+
+        uncached_guids = []
+        for guid, cache_key in cache_keys.items():
+            cached = cached_patients.get(cache_key)
+            if cached is not None:
+                results[guid] = cached
+            else:
+                uncached_guids.append(guid)
+
+        if not uncached_guids:
+            return results
+
+        try:
+            url: str = f"{self.base_url}/api/patients/search-by-guids"
+            payload = {"guids": uncached_guids}
+
+            response: requests.Response = requests.post(
+                url, json=payload, timeout=TIMEOUT_SECONDS
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            entries: list = data.get("entry", [])
+
+            cache_batch = {}
+            for entry in entries:
+                resource: dict = entry.get("resource", {})
+                patient = self._parse_fhir_patient(resource)
+                patient_guid = patient.get("internal_guid")
+
+                if patient_guid:
+                    results[str(patient_guid)] = patient
+                    cache_key = f"patient:{patient_guid}"
+                    cache_batch[cache_key] = patient
+
+            if cache_batch:
+                cache.set_many(cache_batch, CACHE_TIME_SECONDS)
+
+            return results
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error communicating with Patient Service: {e}")
+            raise PatientServiceUnavailableError(
+                f"Patient service unavailable: {e}"
+            ) from e
+        except Exception as e:
+            logger.error(f"Unexpected error in get_patients_by_guids: {e}")
+            raise PatientServiceResponseError(
+                f"Unexpected error processing patient data: {e}"
+            ) from e
+
     def _parse_fhir_patient(self, fhir_resource: dict) -> dict:
         pesel = None
         identifiers = fhir_resource.get("identifier", [])
@@ -178,6 +239,17 @@ class PatientService:
         if mock_patient["internal_guid"] == guid:
             return mock_patient
         return None
+
+    def _mock_get_patients_by_guids(self, guids: List[str]) -> dict[str, dict]:
+        """Mock implementation for batch patient retrieval."""
+        mock_patient = self._get_mock_patient()
+        results = {}
+
+        for guid in guids:
+            if mock_patient["internal_guid"] == guid:
+                results[guid] = mock_patient
+
+        return results
 
     def _get_mock_patient(self) -> dict:
         return {

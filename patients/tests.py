@@ -22,6 +22,319 @@ from tests.common import TestFixtures, run_tests
 class TestPatientViews(TestCase):
     """Test patient API views with authentication and edge cases."""
 
+    # Mock FHIR data fixtures
+    MOCK_PATIENT_SINGLE = {
+        "resourceType": "Patient",
+        "internal_guid": "ab758f9b-0298-4823-b144-ae0db20bc215",
+        "identifier": [{"use": "official", "system": "http://hl7.org/fhir/sid/pesel"}],
+        "name": [{"use": "official", "family": "Jędruszczak", "given": ["Aurelia"]}],
+        "telecom": [
+            {"system": "phone", "value": "500 939 265", "use": "mobile"},
+            {"system": "email", "value": "lkapuscik@example.com", "use": "home"},
+        ],
+        "gender": "female",
+        "birthDate": "2004-11-06",
+        "address": [
+            {
+                "use": "home",
+                "line": ["ul. Zwycięstwa 71/11"],
+                "city": "Skierniewice",
+                "postalCode": "32-835",
+                "country": "PL",
+            }
+        ],
+    }
+
+    MOCK_PATIENTS_SEARCH = {
+        "resourceType": "Bundle",
+        "type": "searchset",
+        "total": 6,
+        "entry": [
+            {
+                "fullUrl": "urn:uuid:d5c62a6e-6f72-469c-99ce-a2419ac9f432",
+                "resource": {
+                    "resourceType": "Patient",
+                    "internal_guid": "d5c62a6e-6f72-469c-99ce-a2419ac9f432",
+                    "identifier": [
+                        {"use": "official", "system": "http://hl7.org/fhir/sid/pesel"}
+                    ],
+                    "name": [
+                        {
+                            "use": "official",
+                            "family": "Trochimiuk",
+                            "given": ["Ksawery"],
+                        }
+                    ],
+                    "telecom": [
+                        {"system": "phone", "value": "780 740 291", "use": "mobile"},
+                        {
+                            "system": "email",
+                            "value": "sebastianpizon@example.org",
+                            "use": "home",
+                        },
+                    ],
+                    "gender": "male",
+                    "birthDate": "1985-02-09",
+                    "address": [
+                        {
+                            "use": "home",
+                            "line": ["ul. Zwycięstwa 980"],
+                            "city": "Kwidzyn",
+                            "postalCode": "86-529",
+                            "country": "PL",
+                        }
+                    ],
+                },
+            },
+            {
+                "fullUrl": "urn:uuid:7be0aac5-9f5d-4667-99ba-18c607d4f6ea",
+                "resource": {
+                    "resourceType": "Patient",
+                    "internal_guid": "7be0aac5-9f5d-4667-99ba-18c607d4f6ea",
+                    "identifier": [
+                        {"use": "official", "system": "http://hl7.org/fhir/sid/pesel"}
+                    ],
+                    "name": [{"use": "official", "family": "Waluk", "given": ["Inga"]}],
+                    "telecom": [
+                        {"system": "phone", "value": "570 679 001", "use": "mobile"},
+                        {
+                            "system": "email",
+                            "value": "mokwamikolaj@example.org",
+                            "use": "home",
+                        },
+                    ],
+                    "gender": "female",
+                    "birthDate": "2013-12-25",
+                    "address": [
+                        {
+                            "use": "home",
+                            "line": ["ulica Dolna 75/89"],
+                            "city": "Kraśnik",
+                            "postalCode": "46-730",
+                            "country": "PL",
+                        }
+                    ],
+                },
+            },
+            {
+                "fullUrl": "urn:uuid:cd55f903-b9e7-4e43-ae19-75fc74971dd2",
+                "resource": {
+                    "resourceType": "Patient",
+                    "internal_guid": "cd55f903-b9e7-4e43-ae19-75fc74971dd2",
+                    "identifier": [
+                        {"use": "official", "system": "http://hl7.org/fhir/sid/pesel"}
+                    ],
+                    "name": [
+                        {"use": "official", "family": "Łaciak", "given": ["Dariusz"]}
+                    ],
+                    "telecom": [
+                        {"system": "phone", "value": "697 079 084", "use": "mobile"},
+                        {
+                            "system": "email",
+                            "value": "uchmara@example.com",
+                            "use": "home",
+                        },
+                    ],
+                    "gender": "male",
+                    "birthDate": "1946-04-11",
+                    "address": [
+                        {
+                            "use": "home",
+                            "line": ["al. Toruńska 41/89"],
+                            "city": "Pszczyna",
+                            "postalCode": "60-296",
+                            "country": "PL",
+                        }
+                    ],
+                },
+            },
+            {
+                "fullUrl": "urn:uuid:8d30f89b-b0e6-46f0-a8d4-d63c8fe92b5b",
+                "resource": {
+                    "resourceType": "Patient",
+                    "internal_guid": "8d30f89b-b0e6-46f0-a8d4-d63c8fe92b5b",
+                    "identifier": [
+                        {"use": "official", "system": "http://hl7.org/fhir/sid/pesel"}
+                    ],
+                    "name": [
+                        {"use": "official", "family": "Hejduk", "given": ["Inga"]}
+                    ],
+                    "telecom": [
+                        {
+                            "system": "phone",
+                            "value": "+48 575 994 136",
+                            "use": "mobile",
+                        },
+                        {
+                            "system": "email",
+                            "value": "zworoch@example.org",
+                            "use": "home",
+                        },
+                    ],
+                    "gender": "female",
+                    "birthDate": "2008-03-05",
+                    "address": [
+                        {
+                            "use": "home",
+                            "line": ["aleja Zaułek 94/33"],
+                            "city": "Śrem",
+                            "postalCode": "85-857",
+                            "country": "PL",
+                        }
+                    ],
+                },
+            },
+            {
+                "fullUrl": "urn:uuid:9538227f-bb85-400a-bf6e-563fce528142",
+                "resource": {
+                    "resourceType": "Patient",
+                    "internal_guid": "9538227f-bb85-400a-bf6e-563fce528142",
+                    "identifier": [
+                        {"use": "official", "system": "http://hl7.org/fhir/sid/pesel"}
+                    ],
+                    "name": [
+                        {"use": "official", "family": "Matejczuk", "given": ["Eliza"]}
+                    ],
+                    "telecom": [
+                        {"system": "phone", "value": "665 812 872", "use": "mobile"},
+                        {
+                            "system": "email",
+                            "value": "olgierd26@example.org",
+                            "use": "home",
+                        },
+                    ],
+                    "gender": "female",
+                    "birthDate": "1959-02-09",
+                    "address": [
+                        {
+                            "use": "home",
+                            "line": ["plac Jaśminowa 27/68"],
+                            "city": "Radomsko",
+                            "postalCode": "68-457",
+                            "country": "PL",
+                        }
+                    ],
+                },
+            },
+            {
+                "fullUrl": "urn:uuid:ab758f9b-0298-4823-b144-ae0db20bc215",
+                "resource": {
+                    "resourceType": "Patient",
+                    "internal_guid": "ab758f9b-0298-4823-b144-ae0db20bc215",
+                    "identifier": [
+                        {"use": "official", "system": "http://hl7.org/fhir/sid/pesel"}
+                    ],
+                    "name": [
+                        {
+                            "use": "official",
+                            "family": "Jędruszczak",
+                            "given": ["Aurelia"],
+                        }
+                    ],
+                    "telecom": [
+                        {"system": "phone", "value": "500 939 265", "use": "mobile"},
+                        {
+                            "system": "email",
+                            "value": "lkapuscik@example.com",
+                            "use": "home",
+                        },
+                    ],
+                    "gender": "female",
+                    "birthDate": "2004-11-06",
+                    "address": [
+                        {
+                            "use": "home",
+                            "line": ["ul. Zwycięstwa 71/11"],
+                            "city": "Skierniewice",
+                            "postalCode": "32-835",
+                            "country": "PL",
+                        }
+                    ],
+                },
+            },
+        ],
+    }
+
+    MOCK_PATIENTS_BULK = {
+        "resourceType": "Bundle",
+        "type": "searchset",
+        "total": 2,
+        "entry": [
+            {
+                "fullUrl": "urn:uuid:8d30f89b-b0e6-46f0-a8d4-d63c8fe92b5b",
+                "resource": {
+                    "resourceType": "Patient",
+                    "internal_guid": "8d30f89b-b0e6-46f0-a8d4-d63c8fe92b5b",
+                    "identifier": [
+                        {"use": "official", "system": "http://hl7.org/fhir/sid/pesel"}
+                    ],
+                    "name": [
+                        {"use": "official", "family": "Hejduk", "given": ["Inga"]}
+                    ],
+                    "telecom": [
+                        {
+                            "system": "phone",
+                            "value": "+48 575 994 136",
+                            "use": "mobile",
+                        },
+                        {
+                            "system": "email",
+                            "value": "zworoch@example.org",
+                            "use": "home",
+                        },
+                    ],
+                    "gender": "female",
+                    "birthDate": "2008-03-05",
+                    "address": [
+                        {
+                            "use": "home",
+                            "line": ["aleja Zaułek 94/33"],
+                            "city": "Śrem",
+                            "postalCode": "85-857",
+                            "country": "PL",
+                        }
+                    ],
+                },
+            },
+            {
+                "fullUrl": "urn:uuid:ab758f9b-0298-4823-b144-ae0db20bc215",
+                "resource": {
+                    "resourceType": "Patient",
+                    "internal_guid": "ab758f9b-0298-4823-b144-ae0db20bc215",
+                    "identifier": [
+                        {"use": "official", "system": "http://hl7.org/fhir/sid/pesel"}
+                    ],
+                    "name": [
+                        {
+                            "use": "official",
+                            "family": "Jędruszczak",
+                            "given": ["Aurelia"],
+                        }
+                    ],
+                    "telecom": [
+                        {"system": "phone", "value": "500 939 265", "use": "mobile"},
+                        {
+                            "system": "email",
+                            "value": "lkapuscik@example.com",
+                            "use": "home",
+                        },
+                    ],
+                    "gender": "female",
+                    "birthDate": "2004-11-06",
+                    "address": [
+                        {
+                            "use": "home",
+                            "line": ["ul. Zwycięstwa 71/11"],
+                            "city": "Skierniewice",
+                            "postalCode": "32-835",
+                            "country": "PL",
+                        }
+                    ],
+                },
+            },
+        ],
+    }
+
     def setUp(self) -> None:
         self.factory = APIRequestFactory()
         user_data: dict[str, str] = TestFixtures.get_test_user_data()
@@ -31,16 +344,22 @@ class TestPatientViews(TestCase):
             password="testpass123",
         )
         cache.clear()
-        patient_service.mock_mode = True
+        patient_service.mock_mode = False
 
     def tearDown(self) -> None:
         User.objects.all().delete()
         cache.clear()
         patient_service.mock_mode = MOCK_PATIENT_SERVICE
 
-    def test_get_patient_success(self) -> None:
+    @patch("patients.services.requests.get")
+    def test_get_patient_success(self, mock_get: Mock) -> None:
         """Test successful patient retrieval with valid GUID."""
-        guid = "00000000-0000-0000-0000-000000000001"
+        guid = "ab758f9b-0298-4823-b144-ae0db20bc215"
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self.MOCK_PATIENT_SINGLE
+        mock_get.return_value = mock_response
 
         request: Request = self.factory.get(f"/api/patients/{guid}/")
         force_authenticate(request, user=self.user)
@@ -52,10 +371,18 @@ class TestPatientViews(TestCase):
         self.assertIn("first_name", response.data)
         self.assertIn("last_name", response.data)
         self.assertEqual(response.data["internal_guid"], guid)
+        self.assertEqual(response.data["first_name"], "Aurelia")
+        self.assertEqual(response.data["last_name"], "Jędruszczak")
 
-    def test_get_patient_not_found(self) -> None:
+    @patch("patients.services.requests.get")
+    def test_get_patient_not_found(self, mock_get: Mock) -> None:
         """Test patient retrieval with non-existent GUID."""
         guid = "99999999-9999-9999-9999-999999999999"
+
+        mock_response = Mock()
+        mock_response.status_code = 404
+        mock_get.return_value = mock_response
+
         request: Request = self.factory.get(f"/api/patients/{guid}/")
         force_authenticate(request, user=self.user)
 
@@ -65,7 +392,8 @@ class TestPatientViews(TestCase):
         self.assertIn("detail", response.data)
         self.assertEqual(response.data["detail"], "Patient not found.")
 
-    def test_get_patient_invalid_guid_format(self) -> None:
+    @patch("patients.services.requests.get")
+    def test_get_patient_invalid_guid_format(self, mock_get: Mock) -> None:
         """Test patient retrieval with malformed GUID."""
         invalid_guids = [
             "not-a-guid",
@@ -74,6 +402,10 @@ class TestPatientViews(TestCase):
             "00000000-0000-0000-0000",  # Incomplete GUID
             "00000000-0000-0000-0000-000000000001-extra",  # Too long
         ]
+
+        mock_response = Mock()
+        mock_response.status_code = 404
+        mock_get.return_value = mock_response
 
         for invalid_guid in invalid_guids:
             with self.subTest(guid=invalid_guid):
@@ -87,8 +419,13 @@ class TestPatientViews(TestCase):
                 # Invalid GUIDs should return 404 (not found)
                 self.assertEqual(response.status_code, 404)
 
-    def test_get_patient_empty_guid(self) -> None:
-        """Test patient retrieval with empty GUID returns all patients list."""
+    @patch("patients.services.requests.get")
+    def test_get_patient_empty_guid(self, mock_get: Mock) -> None:
+        """Test patient retrieval with empty GUID returns 404."""
+        mock_response = Mock()
+        mock_response.status_code = 404
+        mock_get.return_value = mock_response
+
         request: Request = self.factory.get("/api/patients//")
         force_authenticate(request, user=self.user)
 
@@ -106,8 +443,14 @@ class TestPatientViews(TestCase):
 
         self.assertEqual(response.status_code, 401)
 
-    def test_search_patients_success(self) -> None:
+    @patch("patients.services.requests.get")
+    def test_search_patients_success(self, mock_get: Mock) -> None:
         """Test successful patient search."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self.MOCK_PATIENTS_SEARCH
+        mock_get.return_value = mock_response
+
         request: Request = self.factory.get("/api/patients/")
         force_authenticate(request, user=self.user)
 
@@ -115,10 +458,30 @@ class TestPatientViews(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.data, list)
+        self.assertEqual(len(response.data), 6)
 
-    def test_search_patients_with_search_term(self) -> None:
+    @patch("patients.services.requests.get")
+    def test_search_patients_with_search_term(self, mock_get: Mock) -> None:
         """Test patient search with search term."""
-        search_term = "Jan"
+        search_term = "Aurelia"
+
+        entry = self.MOCK_PATIENTS_SEARCH["entry"]
+
+        assert isinstance(entry, list)
+
+        # Create filtered result with only matching patient
+        filtered_bundle = {
+            "resourceType": "Bundle",
+            "type": "searchset",
+            "total": 1,
+            "entry": [entry[-1]],  # type: ignore
+        }
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = filtered_bundle
+        mock_get.return_value = mock_response
+
         request: Request = self.factory.get(f"/api/patients/?search={search_term}")
         force_authenticate(request, user=self.user)
 
@@ -126,17 +489,28 @@ class TestPatientViews(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.data, list)
-        if len(response.data) > 0:
-            # Verify search term is in results
-            patient = response.data[0]
-            self.assertTrue(
-                search_term.lower() in patient["first_name"].lower()
-                or search_term.lower() in patient["last_name"].lower()
-            )
+        self.assertEqual(len(response.data), 1)
+        patient = response.data[0]
+        self.assertTrue(
+            search_term.lower() in patient["first_name"].lower()
+            or search_term.lower() in patient["last_name"].lower()
+        )
 
-    def test_search_patients_no_results(self) -> None:
+    @patch("patients.services.requests.get")
+    def test_search_patients_no_results(self, mock_get: Mock) -> None:
         """Test patient search with search term that has no matches."""
         search_term = "NonExistentPatient12345"
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "resourceType": "Bundle",
+            "type": "searchset",
+            "total": 0,
+            "entry": [],
+        }
+        mock_get.return_value = mock_response
+
         request: Request = self.factory.get(f"/api/patients/?search={search_term}")
         force_authenticate(request, user=self.user)
 
@@ -146,8 +520,14 @@ class TestPatientViews(TestCase):
         self.assertIsInstance(response.data, list)
         self.assertEqual(len(response.data), 0)
 
-    def test_search_patients_empty_search_term(self) -> None:
+    @patch("patients.services.requests.get")
+    def test_search_patients_empty_search_term(self, mock_get: Mock) -> None:
         """Test patient search with empty search term."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self.MOCK_PATIENTS_SEARCH
+        mock_get.return_value = mock_response
+
         request: Request = self.factory.get("/api/patients/?search=")
         force_authenticate(request, user=self.user)
 
@@ -156,9 +536,20 @@ class TestPatientViews(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.data, list)
 
-    def test_search_patients_special_characters(self) -> None:
+    @patch("patients.services.requests.get")
+    def test_search_patients_special_characters(self, mock_get: Mock) -> None:
         """Test patient search with special characters in search term."""
         special_chars = ["%", "&", "ą", "ł", "ż"]
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "resourceType": "Bundle",
+            "type": "searchset",
+            "total": 0,
+            "entry": [],
+        }
+        mock_get.return_value = mock_response
 
         for search_term in special_chars:
             with self.subTest(search_term=search_term):

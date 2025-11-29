@@ -123,12 +123,20 @@ TEMPLATES = [
     },
 ]
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": REDIS_URL,
+if IS_TESTING:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+        }
+    }
 
 WSGI_APPLICATION = "larvixon_site.wsgi.application"
 
@@ -328,6 +336,7 @@ AUTH_USER_MODEL = "accounts.User"
 if IS_TESTING:
     print("--- RUNNING IN TEST MODE ---")
     print("--- Overriding default storage to FileSystemStorage ---")
+    print("--- Overriding cache backend to LocMemCache ---")
 
     MEDIA_ROOT = BASE_DIR / "test_media"
 

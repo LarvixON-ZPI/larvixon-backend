@@ -77,12 +77,11 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(OpenApiTypes.OBJECT)
     def get_patient_details(self, obj):
-        # todo: think if we want to call services in serializers
         if not obj.patient_guid:
             return None
 
-        patient = patient_service.get_patient_by_guid(str(obj.patient_guid))
-        return patient
+        patient_details_map = self.context.get("patient_details_map", {})
+        return patient_details_map.get(str(obj.patient_guid))
 
 
 class VideoAnalysisIdSerializer(serializers.ModelSerializer):

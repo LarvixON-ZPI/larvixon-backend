@@ -54,9 +54,13 @@ class VideoAnalysisTest(APITestCase):
         self.patcher_search_patients = patch(
             "patients.services.patient_service.search_patients"
         )
+        self.patcher_get_patients_by_guids = patch(
+            "patients.services.patient_service.get_patients_by_guids"
+        )
 
         self.mock_get_patient = self.patcher_get_patient.start()
         self.mock_search_patients = self.patcher_search_patients.start()
+        self.mock_get_patients_by_guids = self.patcher_get_patients_by_guids.start()
 
         # Configure mock for get_patient_by_guid to return appropriate patient based on GUID
         def mock_get_patient_side_effect(guid):
@@ -67,6 +71,21 @@ class VideoAnalysisTest(APITestCase):
             return None
 
         self.mock_get_patient.side_effect = mock_get_patient_side_effect
+
+        # Configure mock for get_patients_by_guids to return appropriate patients based on GUIDs
+        def mock_get_patients_by_guids_side_effect(guids):
+            results = {}
+            for guid in guids:
+                guid_str = str(guid)
+                if guid_str == "00000000-0000-0000-0000-000000000001":
+                    results[guid_str] = self.mock_patient_data1
+                elif guid_str == "00000000-0000-0000-0000-000000000002":
+                    results[guid_str] = self.mock_patient_data2
+            return results
+
+        self.mock_get_patients_by_guids.side_effect = (
+            mock_get_patients_by_guids_side_effect
+        )
 
         # Configure mock for search_patients to return appropriate results based on search term
         def mock_search_patients_side_effect(search_term=None):
@@ -472,5 +491,6 @@ class VideoAnalysisTest(APITestCase):
         # Stop all patchers
         self.patcher_get_patient.stop()
         self.patcher_search_patients.stop()
+        self.patcher_get_patients_by_guids.stop()
 
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
