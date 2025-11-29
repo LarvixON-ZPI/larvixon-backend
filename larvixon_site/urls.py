@@ -53,6 +53,8 @@ urlpatterns = [
     path("api/videoprocessor/", include("videoprocessor.urls")),
     # Reports endpoins
     path("api/reports/", include("reports.urls")),
+    # Patients endpoints
+    path("api/patients/", include("patients.urls")),
 ]
 
 if settings.DEBUG:

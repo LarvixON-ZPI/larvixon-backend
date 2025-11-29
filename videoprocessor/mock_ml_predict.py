@@ -1,6 +1,7 @@
 import random
+from typing import Optional
 
-MOCK_CLASS_NAMES = [
+MOCK_SUBSTANCES: list[str] = [
     "cocaine",
     "morphine",
     "ethanol",
@@ -11,9 +12,9 @@ MOCK_CLASS_NAMES = [
 SIMULATE_NONE_FOUND = False
 
 
-def mock_ml_predict(video_path: str) -> dict:
+def mock_ml_predict(video_path: str) -> Optional[dict[str, float]]:
     """
-    Returns mock predictions and confidence scores for the video.
+    Returns dictionary of {substance_name: confidence}
     """
     if SIMULATE_NONE_FOUND:
         return {}
@@ -21,18 +22,40 @@ def mock_ml_predict(video_path: str) -> dict:
     if not video_path:
         return {}
 
-    mock_prediction = random.choice(MOCK_CLASS_NAMES)
+    if len(MOCK_SUBSTANCES) < 1:
+        return {}
 
-    confidence = random.uniform(70.0, 100.0)
+    mock_predicted_substance: str = random.choice(MOCK_SUBSTANCES)
 
-    mock_scores = {cls_name: confidence for cls_name in MOCK_CLASS_NAMES}
+    confidence: float = random.uniform(70.0, 95.0)
 
-    # distribute the remaining confidence among other classes
-    remaining_confidence = 100.0 - confidence
-    other_classes = [c for c in MOCK_CLASS_NAMES if c != mock_prediction]
-    if other_classes:
-        per_other_class_confidence = remaining_confidence / len(other_classes)
-        for cls_name in other_classes:
-            mock_scores[cls_name] = per_other_class_confidence
+    mock_confidences: dict[str, float] = {mock_predicted_substance: confidence}
 
-    return mock_scores
+    mock_confidences.update(
+        _generate_other_confidences(confidence, mock_predicted_substance)
+    )
+
+    return mock_confidences
+
+
+def _generate_other_confidences(
+    confidence: float, mock_predicted_substance: str
+) -> dict[str, float]:
+    mock_confidences: dict[str, float] = {}
+    values: list[float] = [
+        random.uniform(0, 1) for _ in range(len(MOCK_SUBSTANCES) - 1)
+    ]
+    total: float = sum(values)
+
+    remaining_confidence: float = 100.0 - confidence
+
+    other_classes: list[str] = [
+        c for c in MOCK_SUBSTANCES if c != mock_predicted_substance
+    ]
+    for i, substance in enumerate(other_classes):
+        mock_confidences[substance] = values[i] / total * remaining_confidence
+    return mock_confidences
+
+
+if __name__ == "__main__":
+    print(mock_ml_predict("path/to/video.mp4"))

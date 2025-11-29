@@ -1,6 +1,13 @@
+import logging
+
 import django_filters
 from django.db.models import Max, Q
+
+from patients.services import patient_service
+from patients.errors import PatientServiceError
 from .models import VideoAnalysis
+
+logger = logging.getLogger(__name__)
 
 
 class VideoAnalysisFilter(django_filters.FilterSet):
@@ -38,12 +45,17 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         label="Substance Name (Polish) for Min Score Filter (e.g., kokaina,95.5)",
     )
 
+    patient_search = django_filters.CharFilter(
+        method="filter_by_patient_search",
+        label="Patient Search (searches first name, last name, PESEL)",
+    )
+
     class Meta:
         model = VideoAnalysis
         fields = {
             "status": ["exact"],
             "actual_substance": ["exact", "icontains"],
-            "title": ["exact", "icontains"],
+            "description": ["icontains"],
             "created_at": ["date__gte", "date__lte"],
             "completed_at": ["date__gte", "date__lte"],
             "actual_substance": ["exact", "icontains"],
@@ -86,3 +98,23 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         )
 
         return annotated_qs.filter(max_confidence_for_substance__gte=min_score)
+
+    def filter_by_patient_search(self, queryset, name, value):
+        if not value:
+            return queryset
+
+        try:
+            patients = patient_service.search_patients(search_term=value)
+        except PatientServiceError as e:
+            logger.error(f"Patient service error during search: {e}")
+            raise
+
+        if not patients:
+            return queryset.none()
+
+        patient_guids = [p["id"] for p in patients if p.get("id")]
+
+        if not patient_guids:
+            return queryset.none()
+
+        return queryset.filter(patient_guid__in=patient_guids)

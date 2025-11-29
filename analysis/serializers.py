@@ -3,6 +3,7 @@ from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 from drf_spectacular.types import OpenApiTypes
 from .models import Substance, VideoAnalysis, AnalysisResult
+from patients.services import patient_service
 
 
 class SubstanceSerializer(serializers.ModelSerializer):
@@ -32,12 +33,22 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
 
     video_name = serializers.SerializerMethodField()
 
+    patient_details = serializers.SerializerMethodField()
+
+    patient_guid = serializers.UUIDField(
+        required=False,
+        allow_null=True,
+        help_text="GUID of the patient from the Patient Service",
+    )
+
     class Meta:  # type: ignore[misc]
         model = VideoAnalysis
         fields = (
             "id",
             "user",
-            "title",
+            "description",
+            "patient_guid",
+            "patient_details",
             "status",
             "error_message",
             "video_name",
@@ -63,6 +74,14 @@ class VideoAnalysisSerializer(serializers.ModelSerializer):
         if not obj.video:
             return None
         return obj.video.name.split("/")[-1]
+
+    @extend_schema_field(OpenApiTypes.OBJECT)
+    def get_patient_details(self, obj):
+        if not obj.patient_guid:
+            return None
+
+        patient_details_map = self.context.get("patient_details_map", {})
+        return patient_details_map.get(str(obj.patient_guid))
 
 
 class VideoAnalysisIdSerializer(serializers.ModelSerializer):

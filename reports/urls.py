@@ -1,6 +1,8 @@
 from django.urls import path
 from .views import AnalysisReportView
 
+app_name = "reports"
+
 urlpatterns = [
     path(
         "analysis/<int:pk>/pdf/",

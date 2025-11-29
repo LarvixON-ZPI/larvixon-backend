@@ -1,11 +1,11 @@
 import requests
 import json
 import os
-from typing import Dict, Optional
+from typing import Optional
 from larvixon_site.settings import ML_ENDPOINT_URL
 
 
-def send_video_to_ml(video_path: str) -> Optional[Dict[str, float]]:
+def send_video_to_ml(video_path: str) -> Optional[dict[str, float]]:
     """
     Sends a video file as multipart/form-data to the external ML endpoint
     and returns a dictionary of predictions with confidence scores.

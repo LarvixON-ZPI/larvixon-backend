@@ -1,10 +1,16 @@
 import os
+from uuid import UUID
 from rest_framework import serializers
 from rest_framework import status, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
+from patients.services import patient_service
+from patients.errors import (
+    PatientServiceUnavailableError,
+    PatientServiceResponseError,
+)
 from videoprocessor.views.base_video_upload_mixin import BaseVideoUploadMixin
 
 
@@ -27,20 +33,55 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                 "type": "object",
                 "properties": {
                     "video": {"type": "string", "format": "binary"},
-                    "title": {"type": "string"},
+                    "description": {"type": "string"},
+                    "patient_guid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "GUID of the patient from Patient Service",
+                    },
                 },
             }
         },
     )
     def post(self, request, *args, **kwargs):
         video_file = request.FILES.get("video")
-        title = request.data.get("title")
+        description = request.data.get("description", "")
+        patient_guid = request.data.get("patient_guid")
 
         if not video_file:
             return Response(
                 {"error": "No video file provided."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        if patient_guid:
+            try:
+                UUID(patient_guid)
+            except ValueError:
+                return Response(
+                    {"error": "Invalid Patient GUID format."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                patient = patient_service.get_patient_by_guid(patient_guid)
+                if not patient:
+                    return Response(
+                        {"error": f"Patient with GUID {patient_guid} not found."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+            except PatientServiceUnavailableError:
+                return Response(
+                    {
+                        "error": "Patient service is currently unavailable. Please try again later."
+                    },
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                )
+            except PatientServiceResponseError as e:
+                return Response(
+                    {"error": f"Error processing patient data: {str(e)}"},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
 
         error = self.validate_file_size(video_file.size)
         if error:
@@ -56,4 +97,4 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return self.save_video_file(request, video_file, title)
+        return self.save_video_file(request, video_file, description, patient_guid)
