@@ -18,7 +18,7 @@ class VideoAnalysisTest(APITestCase):
     def setUp(self):
         # Mock patient service data
         self.mock_patient_data1 = {
-            "internal_guid": "00000000-0000-0000-0000-000000000001",
+            "id": "00000000-0000-0000-0000-000000000001",
             "pesel": "90010112345",
             "first_name": "Jan",
             "last_name": "Kowalski",
@@ -33,7 +33,7 @@ class VideoAnalysisTest(APITestCase):
         }
 
         self.mock_patient_data2 = {
-            "internal_guid": "00000000-0000-0000-0000-000000000002",
+            "id": "00000000-0000-0000-0000-000000000002",
             "pesel": "85050512345",
             "first_name": "Jan",
             "last_name": "Kowalski",

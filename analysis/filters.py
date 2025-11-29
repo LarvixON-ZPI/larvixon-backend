@@ -112,7 +112,7 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         if not patients:
             return queryset.none()
 
-        patient_guids = [p["internal_guid"] for p in patients if p.get("internal_guid")]
+        patient_guids = [p["id"] for p in patients if p.get("id")]
 
         if not patient_guids:
             return queryset.none()

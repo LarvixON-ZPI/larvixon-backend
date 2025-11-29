@@ -254,7 +254,7 @@ class ReportComprehensiveTest(APITestCase):
 
         # Mock patient service to return patient data
         mock_get_patient.return_value = {
-            "internal_guid": self.patient_guid,
+            "id": self.patient_guid,
             "pesel": "90010112345",
             "first_name": "Jane",
             "last_name": "Doe",

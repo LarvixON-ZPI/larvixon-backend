@@ -1,4 +1,5 @@
 import requests
+from abc import ABC, abstractmethod
 from typing import Optional, List
 import logging
 from django.core.cache import cache
@@ -12,19 +13,82 @@ from patients.errors import (
 logger: logging.Logger = logging.getLogger(__name__)
 
 PESEL_ID = "http://hl7.org/fhir/sid/pesel"
-TIMEOUT_SECONDS = 5
+TIMEOUT_SECONDS = 30
 CACHE_TIME_SECONDS = 60
 
 
-class PatientService:
-    def __init__(self) -> None:
-        self.base_url: str = PATIENT_SERVICE_URL
-        self.mock_mode: bool = MOCK_PATIENT_SERVICE
+class BasePatientService(ABC):
+    @abstractmethod
+    def search_patients(self, search_term: Optional[str] = None) -> List[dict]:
+        """Search for patients by name or PESEL."""
+        pass
+
+    @abstractmethod
+    def get_patient_by_guid(self, guid: str) -> Optional[dict]:
+        """Get a single patient by their GUID."""
+        pass
+
+    @abstractmethod
+    def get_patients_by_guids(self, guids: List[str]) -> dict[str, dict]:
+        """Get multiple patients by their GUIDs."""
+        pass
+
+
+class MockPatientService(BasePatientService):
+    def _get_mock_patient(self) -> dict:
+        return {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "pesel": "90010112345",
+            "first_name": "Jan",
+            "last_name": "Kowalski",
+            "birth_date": "1990-01-01",
+            "gender": "male",
+            "phone": "+48123456789",
+            "email": "jan.kowalski@example.com",
+            "address_line": "ul. Przykładowa 1",
+            "city": "Warszawa",
+            "postal_code": "00-001",
+            "country": "PL",
+        }
 
     def search_patients(self, search_term: Optional[str] = None) -> List[dict]:
-        if self.mock_mode:
-            return self._mock_search_patients(search_term)
+        mock_patient = self._get_mock_patient()
 
+        if search_term:
+            search_lower = search_term.lower()
+            if (
+                search_lower in mock_patient["first_name"].lower()
+                or search_lower in mock_patient["last_name"].lower()
+                or (mock_patient["pesel"] and search_lower in mock_patient["pesel"])
+            ):
+                return [mock_patient]
+            return []
+
+        return [mock_patient]
+
+    def get_patient_by_guid(self, guid: str) -> Optional[dict]:
+        mock_patient = self._get_mock_patient()
+        if mock_patient["id"] == guid:
+            return mock_patient
+        return None
+
+    def get_patients_by_guids(self, guids: List[str]) -> dict[str, dict]:
+        """Mock implementation for batch patient retrieval."""
+        mock_patient = self._get_mock_patient()
+        results = {}
+
+        for guid in guids:
+            if mock_patient["id"] == guid:
+                results[guid] = mock_patient
+
+        return results
+
+
+class APIPatientService(BasePatientService):
+    def __init__(self, base_url: str) -> None:
+        self.base_url = base_url
+
+    def search_patients(self, search_term: Optional[str] = None) -> List[dict]:
         cache_key = f"patient_search:{search_term or ''}"
         cached = cache.get(cache_key)
         if cached is not None:
@@ -65,9 +129,6 @@ class PatientService:
             ) from e
 
     def get_patient_by_guid(self, guid: str) -> Optional[dict]:
-        if self.mock_mode:
-            return self._mock_get_patient(guid)
-
         cache_key = f"patient:{guid}"
         cached = cache.get(cache_key)
         if cached is not None:
@@ -101,9 +162,6 @@ class PatientService:
         if not guids:
             return {}
 
-        if self.mock_mode:
-            return self._mock_get_patients_by_guids(guids)
-
         results = {}
         cache_keys = {guid: f"patient:{guid}" for guid in guids}
         cached_patients = cache.get_many(cache_keys.values())
@@ -135,7 +193,7 @@ class PatientService:
             for entry in entries:
                 resource: dict = entry.get("resource", {})
                 patient = self._parse_fhir_patient(resource)
-                patient_guid = patient.get("internal_guid")
+                patient_guid = patient.get("id")
 
                 if patient_guid:
                     results[str(patient_guid)] = patient
@@ -202,10 +260,10 @@ class PatientService:
             postal_code = address.get("postalCode")
             country = address.get("country")
 
-        internal_guid = fhir_resource.get("internal_guid")
+        internal_guid = fhir_resource.get("id")
 
         return {
-            "internal_guid": internal_guid,
+            "id": internal_guid,
             "pesel": pesel,
             "first_name": first_name,
             "last_name": last_name,
@@ -219,53 +277,11 @@ class PatientService:
             "country": country,
         }
 
-    def _mock_search_patients(self, search_term: Optional[str] = None) -> List[dict]:
-        mock_patient = self._get_mock_patient()
 
-        if search_term:
-            search_lower = search_term.lower()
-            if (
-                search_lower in mock_patient["first_name"].lower()
-                or search_lower in mock_patient["last_name"].lower()
-                or (mock_patient["pesel"] and search_lower in mock_patient["pesel"])
-            ):
-                return [mock_patient]
-            return []
-
-        return [mock_patient]
-
-    def _mock_get_patient(self, guid: str) -> Optional[dict]:
-        mock_patient = self._get_mock_patient()
-        if mock_patient["internal_guid"] == guid:
-            return mock_patient
-        return None
-
-    def _mock_get_patients_by_guids(self, guids: List[str]) -> dict[str, dict]:
-        """Mock implementation for batch patient retrieval."""
-        mock_patient = self._get_mock_patient()
-        results = {}
-
-        for guid in guids:
-            if mock_patient["internal_guid"] == guid:
-                results[guid] = mock_patient
-
-        return results
-
-    def _get_mock_patient(self) -> dict:
-        return {
-            "internal_guid": "00000000-0000-0000-0000-000000000001",
-            "pesel": "90010112345",
-            "first_name": "Jan",
-            "last_name": "Kowalski",
-            "birth_date": "1990-01-01",
-            "gender": "male",
-            "phone": "+48123456789",
-            "email": "jan.kowalski@example.com",
-            "address_line": "ul. Przykładowa 1",
-            "city": "Warszawa",
-            "postal_code": "00-001",
-            "country": "PL",
-        }
+def get_patient_service() -> BasePatientService:
+    if MOCK_PATIENT_SERVICE:
+        return MockPatientService()
+    return APIPatientService(PATIENT_SERVICE_URL)
 
 
-patient_service = PatientService()
+patient_service: BasePatientService = get_patient_service()
