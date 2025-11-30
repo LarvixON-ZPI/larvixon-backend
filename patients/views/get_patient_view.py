@@ -5,12 +5,14 @@ from rest_framework import status
 
 from patients.services import patient_service
 from patients.serializers import PatientSerializer
+from drf_spectacular.utils import extend_schema
 
 
 class GetPatientView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PatientSerializer
 
+    @extend_schema(operation_id="patient_retrieve")
     def get(self, request, guid):
         patient_data = patient_service.get_patient_by_guid(guid)
 

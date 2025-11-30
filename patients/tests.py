@@ -481,7 +481,7 @@ class TestPatientViews(APITestCase):
         mock_response.json.return_value = filtered_bundle
         mock_get.return_value = mock_response
 
-        request: Request = self.factory.get(f"/api/patients/?search={search_term}")
+        request: Request = self.factory.get(f"/api/patients/?first_name={search_term}")
         force_authenticate(request, user=self.user)
 
         response: Response = SearchPatientsView.as_view()(request)
@@ -510,7 +510,7 @@ class TestPatientViews(APITestCase):
         }
         mock_get.return_value = mock_response
 
-        request: Request = self.factory.get(f"/api/patients/?search={search_term}")
+        request: Request = self.factory.get(f"/api/patients/?last_name={search_term}")
         force_authenticate(request, user=self.user)
 
         response: Response = SearchPatientsView.as_view()(request)
@@ -527,7 +527,7 @@ class TestPatientViews(APITestCase):
         mock_response.json.return_value = self.MOCK_PATIENTS_SEARCH
         mock_get.return_value = mock_response
 
-        request: Request = self.factory.get("/api/patients/?search=")
+        request: Request = self.factory.get("/api/patients")
         force_authenticate(request, user=self.user)
 
         response: Response = SearchPatientsView.as_view()(request)
@@ -553,7 +553,7 @@ class TestPatientViews(APITestCase):
         for search_term in special_chars:
             with self.subTest(search_term=search_term):
                 request: Request = self.factory.get(
-                    f"/api/patients/?search={search_term}"
+                    f"/api/patients/?first_name={search_term}"
                 )
                 force_authenticate(request, user=self.user)
 

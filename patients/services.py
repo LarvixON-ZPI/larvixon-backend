@@ -19,8 +19,13 @@ CACHE_TIME_SECONDS = 60
 
 class BasePatientService(ABC):
     @abstractmethod
-    def search_patients(self, search_term: Optional[str] = None) -> List[dict]:
-        """Search for patients by name or PESEL."""
+    def search_patients(
+        self,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        pesel: Optional[str] = None,
+    ) -> List[dict]:
+        """Search for patients by first name, last name, or PESEL."""
         pass
 
     @abstractmethod
@@ -51,15 +56,22 @@ class MockPatientService(BasePatientService):
             "country": "PL",
         }
 
-    def search_patients(self, search_term: Optional[str] = None) -> List[dict]:
+    def search_patients(
+        self,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        pesel: Optional[str] = None,
+    ) -> List[dict]:
         mock_patient = self._get_mock_patient()
 
-        if search_term:
-            search_lower = search_term.lower()
+        if first_name or last_name or pesel:
             if (
-                search_lower in mock_patient["first_name"].lower()
-                or search_lower in mock_patient["last_name"].lower()
-                or (mock_patient["pesel"] and search_lower in mock_patient["pesel"])
+                first_name
+                and first_name.lower() in mock_patient["first_name"].lower()
+                or last_name
+                and last_name.lower() in mock_patient["last_name"].lower()
+                or pesel
+                and pesel in mock_patient["pesel"]
             ):
                 return [mock_patient]
             return []
@@ -73,7 +85,6 @@ class MockPatientService(BasePatientService):
         return None
 
     def get_patients_by_guids(self, guids: List[str]) -> dict[str, dict]:
-        """Mock implementation for batch patient retrieval."""
         mock_patient = self._get_mock_patient()
         results = {}
 
@@ -88,8 +99,13 @@ class APIPatientService(BasePatientService):
     def __init__(self, base_url: str) -> None:
         self.base_url = base_url
 
-    def search_patients(self, search_term: Optional[str] = None) -> List[dict]:
-        cache_key = f"patient_search:{search_term or ''}"
+    def search_patients(
+        self,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        pesel: Optional[str] = None,
+    ) -> List[dict]:
+        cache_key = f"patient_search:first_name={first_name or ''}:last_name={last_name or ''}:pesel={pesel or ''}"
         cached = cache.get(cache_key)
         if cached is not None:
             return cached
@@ -97,8 +113,12 @@ class APIPatientService(BasePatientService):
         try:
             url: str = f"{self.base_url}/api/patients"
             params = {}
-            if search_term:
-                params["search"] = search_term
+            if first_name:
+                params["first_name"] = first_name
+            if last_name:
+                params["last_name"] = last_name
+            if pesel:
+                params["pesel"] = pesel
 
             response: requests.Response = requests.get(
                 url, params=params, timeout=TIMEOUT_SECONDS
