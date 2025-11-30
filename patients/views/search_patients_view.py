@@ -16,17 +16,35 @@ class SearchPatientsView(APIView):
     @extend_schema(
         parameters=[
             OpenApiParameter(
-                name="search",
+                name="first_name",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                description="Search term to filter patients by name, PESEL, or other fields",
+                description="Filter patients by first name",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="last_name",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter patients by last name",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="pesel",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter patients by PESEL",
                 required=False,
             ),
         ],
     )
     def get(self, request):
-        search_term = request.query_params.get("search", None)
+        first_name = request.query_params.get("first_name", None)
+        last_name = request.query_params.get("last_name", None)
+        pesel = request.query_params.get("pesel", None)
 
-        patients = patient_service.search_patients(search_term)
+        patients = patient_service.search_patients(
+            first_name=first_name, last_name=last_name, pesel=pesel
+        )
 
         return Response(patients, status=status.HTTP_200_OK)
