@@ -1,0 +1,2 @@
+from patients.views.get_patient_view import GetPatientView
+from patients.views.search_patients_view import SearchPatientsView

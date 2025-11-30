@@ -17,12 +17,15 @@ class VideoAnalysis(models.Model):
         FAILED = "failed", "Failed"
 
     id: models.BigAutoField = models.BigAutoField(primary_key=True)
-    title: models.CharField = models.CharField(
-        max_length=255, default="Untitled"
-    )  # consider making this field unique for the user?
+    description: models.TextField = models.TextField(blank=True, default="")
 
     user: models.ForeignKey[User, User] = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="analyses"
+    )
+    patient_guid = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
     )
     video = models.FileField(
         upload_to=user_video_upload_to,
@@ -66,7 +69,7 @@ class VideoAnalysis(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return f"{self.title} - {self.video.name} ({self.status})"
+        return f"{self.id} - {self.created_at} - {self.patient_guid or 'None'}"
 
 
 class Substance(models.Model):
@@ -103,4 +106,6 @@ class AnalysisResult(models.Model):
         unique_together = ("analysis", "substance")
 
     def __str__(self) -> str:
-        return f"{self.analysis.title} - {self.substance.name_en} ({self.confidence_score})"
+        return (
+            f"{self.analysis.id} - {self.substance.name_en} ({self.confidence_score})"
+        )
