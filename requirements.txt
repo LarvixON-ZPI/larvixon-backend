@@ -100,7 +100,3 @@ webencodings==0.5.1
 zope.event==6.0
 zope.interface==8.0.1
 zopfli==0.2.3.post1
-azure-core>=1.26.0
-azure-monitor-opentelemetry
-opentelemetry-api
-opentelemetry-sdk

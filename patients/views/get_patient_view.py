@@ -4,10 +4,12 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from patients.services import patient_service
+from patients.serializers import PatientSerializer
 
 
 class GetPatientView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = PatientSerializer
 
     def get(self, request, guid):
         patient_data = patient_service.get_patient_by_guid(guid)

@@ -7,6 +7,7 @@ from django.utils import timezone
 from datetime import timedelta
 from typing import Optional
 from analysis.models import VideoAnalysis
+from analysis.serializers import RetryResponseSerializer
 from larvixon_site.settings import VIDEO_LIFETIME_DAYS
 from videoprocessor.tasks import process_video_task
 from drf_spectacular.utils import extend_schema, OpenApiResponse
@@ -52,6 +53,7 @@ def reset_analysis_for_retry(analysis: VideoAnalysis) -> None:
 
 class VideoAnalysisRetryView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = RetryResponseSerializer
 
     @extend_schema(
         summary="Retry failed analysis",

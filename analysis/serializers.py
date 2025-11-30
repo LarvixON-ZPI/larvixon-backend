@@ -89,3 +89,8 @@ class VideoAnalysisIdSerializer(serializers.ModelSerializer):
         model = VideoAnalysis
         fields = ["id"]
         read_only_fields = ("id",)
+
+
+class RetryResponseSerializer(serializers.Serializer):
+    message = serializers.CharField(read_only=True)
+    analysis_id = serializers.IntegerField(read_only=True)

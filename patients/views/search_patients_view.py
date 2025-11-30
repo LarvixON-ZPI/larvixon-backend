@@ -6,10 +6,12 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
 from patients.services import patient_service
+from patients.serializers import PatientSerializer
 
 
 class SearchPatientsView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = PatientSerializer
 
     @extend_schema(
         parameters=[
