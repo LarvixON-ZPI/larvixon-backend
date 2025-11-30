@@ -13,7 +13,7 @@ from patients.errors import (
 logger: logging.Logger = logging.getLogger(__name__)
 
 PESEL_ID = "http://hl7.org/fhir/sid/pesel"
-TIMEOUT_SECONDS = 30
+TIMEOUT_SECONDS = 90
 CACHE_TIME_SECONDS = 60
 
 
