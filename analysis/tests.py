@@ -8,10 +8,119 @@ from rest_framework.test import APITestCase
 from larvixon_site import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from .models import Substance, AnalysisResult, User, VideoAnalysis
+import uuid
+from unittest.mock import patch
+from django.test import override_settings
 
 
+@override_settings(MOCK_PATIENT_SERVICE=False)
 class VideoAnalysisTest(APITestCase):
     def setUp(self):
+        # Mock patient service data
+        self.mock_patient_data1 = {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "pesel": "90010112345",
+            "first_name": "Jan",
+            "last_name": "Kowalski",
+            "birth_date": "1990-01-01",
+            "gender": "male",
+            "phone": "+48123456789",
+            "email": "jan.kowalski@example.com",
+            "address_line": "ul. Przykładowa 1",
+            "city": "Warszawa",
+            "postal_code": "00-001",
+            "country": "PL",
+        }
+
+        self.mock_patient_data2 = {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "pesel": "85050512345",
+            "first_name": "Jan",
+            "last_name": "Kowalski",
+            "birth_date": "1985-05-05",
+            "gender": "male",
+            "phone": "+48987654321",
+            "email": "jan.kowalski2@example.com",
+            "address_line": "ul. Testowa 2",
+            "city": "Kraków",
+            "postal_code": "30-001",
+            "country": "PL",
+        }
+
+        # Patch the patient service methods
+        self.patcher_get_patient = patch(
+            "patients.services.patient_service.get_patient_by_guid"
+        )
+        self.patcher_search_patients = patch(
+            "patients.services.patient_service.search_patients"
+        )
+        self.patcher_get_patients_by_guids = patch(
+            "patients.services.patient_service.get_patients_by_guids"
+        )
+
+        self.mock_get_patient = self.patcher_get_patient.start()
+        self.mock_search_patients = self.patcher_search_patients.start()
+        self.mock_get_patients_by_guids = self.patcher_get_patients_by_guids.start()
+
+        # Configure mock for get_patient_by_guid to return appropriate patient based on GUID
+        def mock_get_patient_side_effect(guid):
+            if guid == "00000000-0000-0000-0000-000000000001":
+                return self.mock_patient_data1
+            elif guid == "00000000-0000-0000-0000-000000000002":
+                return self.mock_patient_data2
+            return None
+
+        self.mock_get_patient.side_effect = mock_get_patient_side_effect
+
+        # Configure mock for get_patients_by_guids to return appropriate patients based on GUIDs
+        def mock_get_patients_by_guids_side_effect(guids):
+            results = {}
+            for guid in guids:
+                guid_str = str(guid)
+                if guid_str == "00000000-0000-0000-0000-000000000001":
+                    results[guid_str] = self.mock_patient_data1
+                elif guid_str == "00000000-0000-0000-0000-000000000002":
+                    results[guid_str] = self.mock_patient_data2
+            return results
+
+        self.mock_get_patients_by_guids.side_effect = (
+            mock_get_patients_by_guids_side_effect
+        )
+
+        # Configure mock for search_patients to return appropriate results based on search term
+        def mock_search_patients_side_effect(search_term=None):
+            if not search_term:
+                return [self.mock_patient_data1, self.mock_patient_data2]
+
+            search_lower = search_term.lower()
+            results = []
+
+            # Check if search matches patient 1
+            if (
+                search_lower in self.mock_patient_data1["first_name"].lower()
+                or search_lower in self.mock_patient_data1["last_name"].lower()
+                or (
+                    self.mock_patient_data1["pesel"]
+                    and search_lower in self.mock_patient_data1["pesel"]
+                )
+            ):
+                results.append(self.mock_patient_data1)
+
+            # Check if search matches patient 2
+            if (
+                search_lower in self.mock_patient_data2["first_name"].lower()
+                or search_lower in self.mock_patient_data2["last_name"].lower()
+                or (
+                    self.mock_patient_data2["pesel"]
+                    and search_lower in self.mock_patient_data2["pesel"]
+                )
+            ):
+                results.append(self.mock_patient_data2)
+
+            return results
+
+        self.mock_search_patients.side_effect = mock_search_patients_side_effect
+
         # User 1
         self.user = User.objects.create_user(
             username="testuser", email="test@example.com", password="testpass123"
@@ -25,6 +134,10 @@ class VideoAnalysisTest(APITestCase):
 
         self.analysis_list_url = reverse("analysis:analysis-list")
 
+        # Create patient GUIDs (simulating patients in Patient Service)
+        self.patient_guid1 = uuid.UUID("00000000-0000-0000-0000-000000000001")
+        self.patient_guid2 = uuid.UUID("00000000-0000-0000-0000-000000000002")
+
         # Create Substances
         self.substance1 = Substance.objects.create(name_en="Cocaine")
         self.substance2 = Substance.objects.create(name_en="Morphine")
@@ -35,12 +148,12 @@ class VideoAnalysisTest(APITestCase):
         # Analysis 1: Completed, has Cocaine and some Morphine
         self.analysis1 = VideoAnalysis.objects.create(
             user=self.user,
-            title="Cocaine Test",
+            description="Cocaine Test",
             video=SimpleUploadedFile(
                 "test_video1.mp4", video_content, content_type="video/mp4"
             ),
             status=VideoAnalysis.Status.COMPLETED,
-            created_at=timezone.now() - datetime.timedelta(days=2),
+            patient_guid=self.patient_guid1,
         )
         AnalysisResult.objects.create(
             analysis=self.analysis1, substance=self.substance1, confidence_score=0.95
@@ -49,15 +162,18 @@ class VideoAnalysisTest(APITestCase):
             analysis=self.analysis1, substance=self.substance2, confidence_score=0.55
         )
 
+        self.analysis1.created_at = timezone.now() - datetime.timedelta(days=2)
+        self.analysis1.save()
+
         # Analysis 2: Completed, has Morphine and some Cocaine
         self.analysis2 = VideoAnalysis.objects.create(
             user=self.user,
-            title="A Morphine Video",
+            description="A Morphine Video",
             video=SimpleUploadedFile(
                 "test_video2.mp4", video_content, content_type="video/mp4"
             ),
             status=VideoAnalysis.Status.COMPLETED,
-            created_at=timezone.now() - datetime.timedelta(days=1),
+            patient_guid=self.patient_guid2,
         )
         AnalysisResult.objects.create(
             analysis=self.analysis2, substance=self.substance2, confidence_score=0.80
@@ -66,21 +182,25 @@ class VideoAnalysisTest(APITestCase):
             analysis=self.analysis2, substance=self.substance1, confidence_score=0.60
         )
 
+        self.analysis2.created_at = timezone.now() - datetime.timedelta(days=1)
+        self.analysis2.save()
+
         # Analysis 3: Pending, no results yet
         self.analysis3 = VideoAnalysis.objects.create(
             user=self.user,
-            title="Surprise Analysis",
+            description="Surprise Analysis",
             video=SimpleUploadedFile(
                 "test_video3.mp4", video_content, content_type="video/mp4"
             ),
             status=VideoAnalysis.Status.PENDING,
             created_at=timezone.now(),
+            patient_guid=None,
         )
 
         # Analysis 4: Belongs to other_user
         self.analysis4_other_user = VideoAnalysis.objects.create(
             user=self.other_user,
-            title="Other User's Video",
+            description="Other User's Video",
             video=SimpleUploadedFile(
                 "test_video4.mp4", video_content, content_type="video/mp4"
             ),
@@ -98,7 +218,7 @@ class VideoAnalysisTest(APITestCase):
         )
 
         payload = {
-            "title": "New Video Test",
+            "description": "New Video Test",
             "video": fake_video,
         }
 
@@ -111,6 +231,32 @@ class VideoAnalysisTest(APITestCase):
         new_analysis = VideoAnalysis.objects.get(id=response.data["id"])
         video_name = os.path.basename(new_analysis.video.name)
         self.assertEqual(video_name, "new_video.mp4")
+
+    def test_create_analysis_with_patient(self):
+        fake_video = SimpleUploadedFile(
+            "patient_video.mp4", b"content", content_type="video/mp4"
+        )
+        payload = {
+            "description": "Analysis for Patient 1",
+            "video": fake_video,
+            "patient_guid": str(self.patient_guid1),
+        }
+
+        response = self.client.post(self.analysis_list_url, payload, format="multipart")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        new_analysis = VideoAnalysis.objects.get(id=response.data["id"])
+        self.assertEqual(new_analysis.patient_guid, self.patient_guid1)
+
+    def test_get_analysis_detail_includes_patient(self):
+        detail_url = reverse("analysis:analysis-detail", args=[self.analysis1.id])
+        response = self.client.get(detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("patient_details", response.data)
+        # Mock patient service returns same patient for any GUID
+        self.assertEqual(response.data["patient_details"]["last_name"], "Kowalski")
+        self.assertEqual(response.data["patient_details"]["pesel"], "90010112345")
 
     def test_delete_analysis(self):
         analysis_to_delete = self.analysis1
@@ -165,9 +311,9 @@ class VideoAnalysisTest(APITestCase):
         ids = {item["id"] for item in response.data["results"]}
         self.assertEqual(ids, {self.analysis1.id, self.analysis2.id})
 
-    def test_filter_by_title_icontains(self):
+    def test_filter_by_description_icontains(self):
         response = self.client.get(
-            self.analysis_list_url, {"title__icontains": "video"}
+            self.analysis_list_url, {"description__icontains": "video"}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
@@ -203,22 +349,55 @@ class VideoAnalysisTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 0)
 
+    # --- Patient Filter Tests ---
+
+    def test_filter_by_patient_search_last_name(self):
+        # Mock patient service will return the same mock patient for any search
+        # Since both analyses have patient GUIDs, they will both match
+        response = self.client.get(
+            self.analysis_list_url, {"patient_search": "Kowalski"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Mock service returns same patient for all searches, so both analyses match
+        self.assertEqual(len(response.data["results"]), 2)
+
+    def test_filter_by_patient_search_first_name(self):
+        response = self.client.get(self.analysis_list_url, {"patient_search": "Jan"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Mock service returns same patient for all searches that match
+        self.assertEqual(len(response.data["results"]), 2)
+
+    def test_filter_by_patient_search_pesel(self):
+        response = self.client.get(
+            self.analysis_list_url, {"patient_search": "90010112345"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+
+    def test_filter_by_patient_search_no_match(self):
+        response = self.client.get(
+            self.analysis_list_url, {"patient_search": "NonExistent"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Mock patient service won't match this
+        self.assertEqual(len(response.data["results"]), 0)
+
     # --- Ordering Tests ---
 
-    def test_ordering_by_title_ascending(self):
-        response = self.client.get(self.analysis_list_url, {"ordering": "title"})
+    def test_ordering_by_description_ascending(self):
+        response = self.client.get(self.analysis_list_url, {"ordering": "description"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        titles = [item["title"] for item in response.data["results"]]
+        descriptions = [item["description"] for item in response.data["results"]]
         self.assertEqual(
-            titles, ["A Morphine Video", "Cocaine Test", "Surprise Analysis"]
+            descriptions, ["A Morphine Video", "Cocaine Test", "Surprise Analysis"]
         )
 
-    def test_ordering_by_title_descending(self):
-        response = self.client.get(self.analysis_list_url, {"ordering": "-title"})
+    def test_ordering_by_description_descending(self):
+        response = self.client.get(self.analysis_list_url, {"ordering": "-description"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        titles = [item["title"] for item in response.data["results"]]
+        descriptions = [item["description"] for item in response.data["results"]]
         self.assertEqual(
-            titles, ["Surprise Analysis", "Cocaine Test", "A Morphine Video"]
+            descriptions, ["Surprise Analysis", "Cocaine Test", "A Morphine Video"]
         )
 
     def test_default_ordering_created_at_descending(self):
@@ -236,7 +415,7 @@ class VideoAnalysisTest(APITestCase):
 
     def test_create_unauthenticated(self):
         self.client.force_authenticate(user=None)
-        payload = {"title": "Should Fail"}
+        payload = {"description": "Should Fail"}
         response = self.client.post(self.analysis_list_url, payload)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -258,7 +437,7 @@ class VideoAnalysisTest(APITestCase):
         detail_url = reverse(
             "analysis:analysis-detail", args=[self.analysis4_other_user.id]
         )
-        response = self.client.patch(detail_url, {"title": "hacked"})
+        response = self.client.patch(detail_url, {"description": "hacked"})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_user_cannot_delete_other_users_analysis(self):
@@ -275,7 +454,7 @@ class VideoAnalysisTest(APITestCase):
             "not_a_video.txt", b"this is text", content_type="text/plain"
         )
         payload = {
-            "title": "Text File Test",
+            "description": "Text File Test",
             "video": fake_text_file,
         }
         response = self.client.post(self.analysis_list_url, payload, format="multipart")
@@ -309,4 +488,9 @@ class VideoAnalysisTest(APITestCase):
         self.assertEqual(response.data["results"][0]["id"], self.analysis3.id)
 
     def tearDown(self):
+        # Stop all patchers
+        self.patcher_get_patient.stop()
+        self.patcher_search_patients.stop()
+        self.patcher_get_patients_by_guids.stop()
+
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)

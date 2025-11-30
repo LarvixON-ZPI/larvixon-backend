@@ -52,14 +52,14 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
 
-CELERY_BEAT_SCHEDULE = {
-    "cleanup-old-analyses-videos-daily": {
-        "task": "analysis.tasks.cleanup_old_analyses_videos",
-        "schedule": crontab(hour=0, minute=0),  # every day at midnight
-    },
-}
-
 VIDEO_LIFETIME_DAYS: int = env_get.int("VIDEO_LIFETIME_DAYS", default=14)
+
+PATIENT_SERVICE_URL: str = env_get(
+    "PATIENT_SERVICE_URL", default="http://localhost:8001/api/v1"
+)
+MOCK_PATIENT_SERVICE: bool = env_get("MOCK_PATIENT_SERVICE", default=False)
+
+REDIS_URL: str = env_get("REDIS_URL", default="redis://localhost:6379/1")
 
 # Application definition
 INSTALLED_APPS = [
@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     "accounts.apps.AccountsConfig",
     "analysis",
     "reports",
+    "patients",
     "storages",
 ]
 
@@ -121,6 +122,21 @@ TEMPLATES = [
         },
     },
 ]
+
+if IS_TESTING:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+        }
+    }
 
 WSGI_APPLICATION = "larvixon_site.wsgi.application"
 
@@ -320,6 +336,7 @@ AUTH_USER_MODEL = "accounts.User"
 if IS_TESTING:
     print("--- RUNNING IN TEST MODE ---")
     print("--- Overriding default storage to FileSystemStorage ---")
+    print("--- Overriding cache backend to LocMemCache ---")
 
     MEDIA_ROOT = BASE_DIR / "test_media"
 
