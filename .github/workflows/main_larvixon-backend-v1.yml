@@ -5,9 +5,6 @@
 name: Build and deploy Python app to Azure Web App - larvixon-backend-v1
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
