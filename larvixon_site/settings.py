@@ -19,7 +19,7 @@ env_get: Any = env
 
 SECRET_KEY: str = env_get("SECRET_KEY", default="django-insecure-fallback-key-dla-dev")
 
-DEBUG = env_get("DEBUG")
+DEBUG: str = env_get("DEBUG")
 IS_TESTING = "test" in sys.argv
 
 ALLOWED_HOSTS: list[str] = env_get.list(
@@ -106,6 +106,27 @@ MIDDLEWARE = [
     "django_otp.middleware.OTPMiddleware",
     "allauth.account.middleware.AccountMiddleware",
 ]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+    },
+}
 
 ROOT_URLCONF = "larvixon_site.urls"
 
