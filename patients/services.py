@@ -4,7 +4,11 @@ from typing import Optional, List
 import logging
 from django.core.cache import cache
 
-from larvixon_site.settings import MOCK_PATIENT_SERVICE, PATIENT_SERVICE_URL
+from larvixon_site.settings import (
+    MOCK_PATIENT_SERVICE,
+    PATIENT_API_TOKEN,
+    PATIENT_SERVICE_URL,
+)
 from patients.errors import (
     PatientServiceUnavailableError,
     PatientServiceResponseError,
@@ -99,6 +103,12 @@ class APIPatientService(BasePatientService):
     def __init__(self, base_url: str) -> None:
         self.base_url = base_url
 
+    @property
+    def api_headers(self) -> dict:
+        return {
+            "x-api-token": PATIENT_API_TOKEN,
+        }
+
     def search_patients(
         self,
         first_name: Optional[str] = None,
@@ -121,7 +131,7 @@ class APIPatientService(BasePatientService):
                 params["pesel"] = pesel
 
             response: requests.Response = requests.get(
-                url, params=params, timeout=TIMEOUT_SECONDS
+                url, params=params, timeout=TIMEOUT_SECONDS, headers=self.api_headers
             )
             response.raise_for_status()
 
@@ -156,7 +166,9 @@ class APIPatientService(BasePatientService):
 
         try:
             url: str = f"{self.base_url}/api/patients/{guid}"
-            response: requests.Response = requests.get(url, timeout=TIMEOUT_SECONDS)
+            response: requests.Response = requests.get(
+                url, timeout=TIMEOUT_SECONDS, headers=self.api_headers
+            )
             if response.status_code == 404:
                 return None
             response.raise_for_status()
@@ -202,7 +214,7 @@ class APIPatientService(BasePatientService):
             payload = {"guids": uncached_guids}
 
             response: requests.Response = requests.post(
-                url, json=payload, timeout=TIMEOUT_SECONDS
+                url, json=payload, timeout=TIMEOUT_SECONDS, headers=self.api_headers
             )
             response.raise_for_status()
 
