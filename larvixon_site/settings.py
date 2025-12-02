@@ -58,6 +58,7 @@ PATIENT_SERVICE_URL: str = env_get(
     "PATIENT_SERVICE_URL", default="http://localhost:8001/api/v1"
 )
 MOCK_PATIENT_SERVICE: bool = env_get("MOCK_PATIENT_SERVICE", default=False)
+PATIENT_API_TOKEN: str = env_get("PATIENT_API_TOKEN", default="default-token")
 
 REDIS_URL: str = env_get("REDIS_URL", default="redis://localhost:6379/1")
 
