@@ -21,7 +21,7 @@ class VideoAnalysisTest(APITestCase):
         self.mock_patient_data1 = {
             "id": "00000000-0000-0000-0000-000000000001",
             "pesel": "90010112345",
-            "first_name": "Jan",
+            "first_name": "Andrzej",
             "last_name": "Kowalski",
             "birth_date": "1990-01-01",
             "gender": "male",
@@ -88,32 +88,53 @@ class VideoAnalysisTest(APITestCase):
             mock_get_patients_by_guids_side_effect
         )
 
-        # Configure mock for search_patients to return appropriate results based on search term
-        def mock_search_patients_side_effect(search_term: Optional[str]):
-            if not search_term:
+        # Configure mock for search_patients to return appropriate results based on search parameters
+        def mock_search_patients_side_effect(
+            first_name: Optional[str] = None,
+            last_name: Optional[str] = None,
+            pesel: Optional[str] = None,
+        ):
+            if not first_name and not last_name and not pesel:
                 return [self.mock_patient_data1, self.mock_patient_data2]
 
-            search_lower = search_term.lower()
             results = []
 
             # Check if search matches patient 1
             if (
-                search_lower in self.mock_patient_data1["first_name"].lower()
-                or search_lower in self.mock_patient_data1["last_name"].lower()
+                (
+                    first_name
+                    and first_name.lower()
+                    in self.mock_patient_data1["first_name"].lower()
+                )
                 or (
-                    self.mock_patient_data1["pesel"]
-                    and search_lower in self.mock_patient_data1["pesel"]
+                    last_name
+                    and last_name.lower()
+                    in self.mock_patient_data1["last_name"].lower()
+                )
+                or (
+                    pesel
+                    and self.mock_patient_data1["pesel"]
+                    and pesel in self.mock_patient_data1["pesel"]
                 )
             ):
                 results.append(self.mock_patient_data1)
 
             # Check if search matches patient 2
             if (
-                search_lower in self.mock_patient_data2["first_name"].lower()
-                or search_lower in self.mock_patient_data2["last_name"].lower()
+                (
+                    first_name
+                    and first_name.lower()
+                    in self.mock_patient_data2["first_name"].lower()
+                )
                 or (
-                    self.mock_patient_data2["pesel"]
-                    and search_lower in self.mock_patient_data2["pesel"]
+                    last_name
+                    and last_name.lower()
+                    in self.mock_patient_data2["last_name"].lower()
+                )
+                or (
+                    pesel
+                    and self.mock_patient_data2["pesel"]
+                    and pesel in self.mock_patient_data2["pesel"]
                 )
             ):
                 results.append(self.mock_patient_data2)
@@ -353,34 +374,23 @@ class VideoAnalysisTest(APITestCase):
     # --- Patient Filter Tests ---
 
     def test_filter_by_patient_search_last_name(self):
-        # Mock patient service will return the same mock patient for any search
-        # Since both analyses have patient GUIDs, they will both match
-        response = self.client.get(
-            self.analysis_list_url, {"patient_search": "Kowalski"}
-        )
+        response = self.client.get(self.analysis_list_url, {"last_name": "Kowalski"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Mock service returns same patient for all searches, so both analyses match
         self.assertEqual(len(response.data["results"]), 2)
 
     def test_filter_by_patient_search_first_name(self):
-        response = self.client.get(self.analysis_list_url, {"patient_search": "Jan"})
+        response = self.client.get(self.analysis_list_url, {"first_name": "Jan"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Mock service returns same patient for all searches that match
-        self.assertEqual(len(response.data["results"]), 2)
+        self.assertEqual(len(response.data["results"]), 1)
 
     def test_filter_by_patient_search_pesel(self):
-        response = self.client.get(
-            self.analysis_list_url, {"patient_search": "90010112345"}
-        )
+        response = self.client.get(self.analysis_list_url, {"pesel": "90010112345"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
 
     def test_filter_by_patient_search_no_match(self):
-        response = self.client.get(
-            self.analysis_list_url, {"patient_search": "NonExistent"}
-        )
+        response = self.client.get(self.analysis_list_url, {"pesel": "NonExistent"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Mock patient service won't match this
         self.assertEqual(len(response.data["results"]), 0)
 
     # --- Ordering Tests ---

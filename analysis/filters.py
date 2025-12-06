@@ -45,9 +45,19 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         label="Substance Name (Polish) for Min Score Filter (e.g., kokaina,95.5)",
     )
 
-    patient_search = django_filters.CharFilter(
-        method="filter_by_patient_search",
-        label="Patient Search (searches first name, last name, PESEL)",
+    first_name = django_filters.CharFilter(
+        method="filter_by_patient_first_name",
+        label="Patient First Name",
+    )
+
+    last_name = django_filters.CharFilter(
+        method="filter_by_patient_last_name",
+        label="Patient Last Name",
+    )
+
+    pesel = django_filters.CharFilter(
+        method="filter_by_patient_pesel",
+        label="Patient PESEL",
     )
 
     class Meta:
@@ -105,14 +115,54 @@ class VideoAnalysisFilter(django_filters.FilterSet):
 
         return annotated_qs.filter(max_confidence_for_substance__gte=min_score)
 
-    def filter_by_patient_search(self, queryset, name, value):
+    def filter_by_patient_first_name(self, queryset, name, value):
+        if not value:
+            return queryset
+
+        try:
+            patients = patient_service.search_patients(first_name=value)
+        except PatientServiceError as e:
+            logger.error(f"Patient service error during first name search: {e}")
+            raise
+
+        if not patients:
+            return queryset.none()
+
+        patient_guids = [p["id"] for p in patients if p.get("id")]
+
+        if not patient_guids:
+            return queryset.none()
+
+        return queryset.filter(patient_guid__in=patient_guids)
+
+    def filter_by_patient_last_name(self, queryset, name, value):
+        if not value:
+            return queryset
+
+        try:
+            patients = patient_service.search_patients(last_name=value)
+        except PatientServiceError as e:
+            logger.error(f"Patient service error during last name search: {e}")
+            raise
+
+        if not patients:
+            return queryset.none()
+
+        patient_guids = [p["id"] for p in patients if p.get("id")]
+
+        if not patient_guids:
+            return queryset.none()
+
+        return queryset.filter(patient_guid__in=patient_guids)
+
+    def filter_by_patient_pesel(self, queryset, name, value):
         if not value:
             return queryset
 
         try:
             patients = patient_service.search_patients(pesel=value)
         except PatientServiceError as e:
-            logger.error(f"Patient service error during search: {e}")
+            logger.error(f"Patient service error during PESEL search: {e}")
             raise
 
         if not patients:
