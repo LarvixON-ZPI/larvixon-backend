@@ -1,5 +1,6 @@
 from datetime import timedelta
 import os
+import logging
 from celery import shared_task
 from django.utils import timezone
 from analysis.models import Substance, VideoAnalysis
@@ -8,6 +9,8 @@ from .ml_service import predict_video
 from django.core.files.storage import default_storage
 from tempfile import NamedTemporaryFile
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 def get_sorted_predictions(scores):
@@ -31,7 +34,7 @@ def process_video_task(analysis_id: int) -> None:
     try:
         analysis = VideoAnalysis.objects.get(id=analysis_id)
     except VideoAnalysis.DoesNotExist:
-        print(f"VideoAnalysis with ID {analysis_id} not found.")
+        logger.error(f"VideoAnalysis with ID {analysis_id} not found.")
         return
 
     try:
@@ -45,7 +48,9 @@ def process_video_task(analysis_id: int) -> None:
                 tmp_file.flush()
                 video_path = tmp_file.name
 
-                print(f"Processing video at {video_path} for analysis ID {analysis_id}")
+                logger.info(
+                    f"Processing video at {video_path} for analysis ID {analysis_id}"
+                )
                 results = predict_video(video_path)
 
         if not results:
@@ -53,6 +58,7 @@ def process_video_task(analysis_id: int) -> None:
             analysis.error_message = (
                 "Model request failed: No predictions returned from ML endpoint"
             )
+            logger.warning(f"No predictions returned for analysis {analysis_id}")
         else:
             for substance_name, score in get_sorted_predictions(results):
                 detected_substance, _ = Substance.objects.get_or_create(
@@ -66,19 +72,19 @@ def process_video_task(analysis_id: int) -> None:
             analysis.status = VideoAnalysis.Status.COMPLETED
 
         analysis.save()
-        print(f"Processing completed for analysis ID {analysis_id}")
+        logger.info(f"Processing completed for analysis ID {analysis_id}")
 
     except Exception as e:
         if "analysis" in locals():
             analysis.status = VideoAnalysis.Status.FAILED
             analysis.error_message = f"Model request failed: {str(e)}"
             analysis.save()
-        print(f"An error occurred: {e}")
+        logger.exception(f"An error occurred processing analysis {analysis_id}: {e}")
 
     finally:
         if video_path and os.path.exists(video_path):
             try:
                 os.remove(video_path)
-                print(f"Cleaned up temp file: {video_path}")
+                logger.debug(f"Cleaned up temp file: {video_path}")
             except Exception as e:
-                print(f"Error cleaning up temp file {video_path}: {e}")
+                logger.error(f"Error cleaning up temp file {video_path}: {e}")

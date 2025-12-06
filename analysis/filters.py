@@ -66,7 +66,10 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         try:
             substance_name, min_score_str = value.split(",")
             min_score = float(min_score_str)
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError) as e:
+            logger.warning(
+                f"Invalid substance and score filter format: {value}, error: {e}"
+            )
             return queryset
 
         annotated_qs = queryset.annotate(
@@ -85,7 +88,10 @@ class VideoAnalysisFilter(django_filters.FilterSet):
         try:
             substance_name, min_score_str = value.split(",")
             min_score = float(min_score_str)
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError) as e:
+            logger.warning(
+                f"Invalid Polish substance and score filter format: {value}, error: {e}"
+            )
             return queryset
 
         annotated_qs = queryset.annotate(

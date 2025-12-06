@@ -6,11 +6,14 @@ from rest_framework.request import Request
 from django.utils import timezone
 from datetime import timedelta
 from typing import Optional
+import logging
 from analysis.models import VideoAnalysis
 from analysis.serializers import RetryResponseSerializer
 from larvixon_site.settings import VIDEO_LIFETIME_DAYS
 from videoprocessor.tasks import process_video_task
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+
+logger = logging.getLogger(__name__)
 
 
 def validate_analysis_status(analysis: VideoAnalysis) -> Optional[Response]:
@@ -83,6 +86,9 @@ class VideoAnalysisRetryView(APIView):
         try:
             analysis = VideoAnalysis.objects.get(id=pk, user=request.user)  # type: ignore[misc]
         except VideoAnalysis.DoesNotExist:
+            logger.warning(
+                f"Analysis {pk} not found for user {request.user.id} during retry attempt"
+            )
             return Response(
                 {
                     "error": "Analysis not found or you do not have permission to access it."

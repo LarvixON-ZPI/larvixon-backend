@@ -1,4 +1,5 @@
 import os
+import logging
 from io import BytesIO
 from django.http import HttpResponse
 from django.utils import timezone
@@ -19,6 +20,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase.pdfmetrics import registerFontFamily
+
+logger = logging.getLogger(__name__)
 
 
 class AnalysisReportPDFGenerator:
@@ -53,7 +56,7 @@ class AnalysisReportPDFGenerator:
         font_bold_path = finders.find("fonts/DejaVuSans-Bold.ttf")
 
         if not font_regular_path or not font_bold_path:
-            print("Warning: Font files not found! Using Helvetica.")
+            logger.warning("Font files not found! Using Helvetica.")
             return
 
         pdfmetrics.registerFont(TTFont("DejaVuSans", font_regular_path))

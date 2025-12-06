@@ -1,4 +1,5 @@
 import os
+import logging
 from uuid import UUID
 from rest_framework import serializers
 from rest_framework import status, permissions
@@ -12,6 +13,8 @@ from patients.errors import (
     PatientServiceResponseError,
 )
 from videoprocessor.views.base_video_upload_mixin import BaseVideoUploadMixin
+
+logger = logging.getLogger(__name__)
 
 
 class VideoUploadSerializer(serializers.Serializer):
@@ -58,6 +61,7 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
             try:
                 UUID(patient_guid)
             except ValueError:
+                logger.warning(f"Invalid Patient GUID format provided: {patient_guid}")
                 return Response(
                     {"error": "Invalid Patient GUID format."},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -70,7 +74,10 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                         {"error": f"Patient with GUID {patient_guid} not found."},
                         status=status.HTTP_404_NOT_FOUND,
                     )
-            except PatientServiceUnavailableError:
+            except PatientServiceUnavailableError as e:
+                logger.error(
+                    f"Patient service unavailable for GUID {patient_guid}: {e}"
+                )
                 return Response(
                     {
                         "error": "Patient service is currently unavailable. Please try again later."
@@ -78,6 +85,9 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                     status=status.HTTP_503_SERVICE_UNAVAILABLE,
                 )
             except PatientServiceResponseError as e:
+                logger.error(
+                    f"Patient service response error for GUID {patient_guid}: {e}"
+                )
                 return Response(
                     {"error": f"Error processing patient data: {str(e)}"},
                     status=status.HTTP_502_BAD_GATEWAY,
@@ -85,7 +95,7 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
 
         error = self.validate_file_size(video_file.size)
         if error:
-            print(error.data)
+            logger.warning(f"File size validation failed: {error.data}")
             return error
 
         ext = os.path.splitext(video_file.name)[1].lower()

@@ -1,10 +1,13 @@
 import os
+import logging
 from rest_framework.response import Response
 from rest_framework import status
 from analysis.models import VideoAnalysis
 from videoprocessor.services import VideoFileManager
 from videoprocessor.tasks import process_video_task
 from django.db import transaction
+
+logger = logging.getLogger(__name__)
 
 MAX_GIGABYTES = 3
 MAX_FILE_SIZE = MAX_GIGABYTES * 1024**3
@@ -48,7 +51,7 @@ class BaseVideoUploadMixin:
                     request.user.unmark_new_user()
 
         except Exception as e:
-            print(f"Error saving video: {e}")
+            logger.exception(f"Error saving video: {e}")
             return Response(
                 {"error": f"Failed to process upload: {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
