@@ -1,0 +1,25 @@
+[run]
+source =
+    analysis
+    patients
+    reports
+    videoprocessor
+branch = True
+omit =
+    */migrations/*
+    */tests/*
+    config*.py
+    larvixon_site/*
+    *.sh
+    docker-compose*.yml
+    */admin.py
+timid = True
+
+[report]
+show_missing = True
+skip_covered = False
+precision = 2
+
+[html]
+directory = htmlcov
+title = LarvixON Test Coverage
