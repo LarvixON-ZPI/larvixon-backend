@@ -2,9 +2,9 @@ import logging
 from rest_framework import generics, permissions
 from analysis.models import VideoAnalysis
 from ..serializers import VideoAnalysisSerializer
-from patients.services import patient_service
+from patients.services.patients import patient_service
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class VideoAnalysisDetailView(generics.RetrieveUpdateDestroyAPIView):

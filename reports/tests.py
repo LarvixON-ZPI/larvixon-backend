@@ -7,7 +7,7 @@ from rest_framework.test import APITestCase
 from io import BytesIO
 
 from analysis.models import VideoAnalysis, Substance, AnalysisResult
-from reports.services import AnalysisReportPDFGenerator
+from reports.services.reports import AnalysisReportPDFGenerator
 from accounts.models import User
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "larvixon_site.settings")
@@ -87,7 +87,7 @@ class ReportBasicTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    @patch("reports.services.finders.find")
+    @patch("reports.services.reports.finders.find")
     def test_successful_report_generation(self, mock_find):
 
         mock_find.return_value = None
@@ -135,7 +135,7 @@ class ReportPDFGeneratorTests(TestCase):
         self.assertEqual(generator.analysis, analysis)
         self.assertIsInstance(generator.buffer, BytesIO)
 
-    @patch("reports.services.finders.find")
+    @patch("reports.services.reports.finders.find")
     def test_pdf_generation_without_patient(self, mock_find):
         mock_find.return_value = None
 
@@ -156,7 +156,7 @@ class ReportPDFGeneratorTests(TestCase):
         self.assertGreater(len(pdf_bytes), 0)
         self.assertTrue(pdf_bytes.startswith(b"%PDF"))
 
-    @patch("reports.services.finders.find")
+    @patch("reports.services.reports.finders.find")
     def test_pdf_generation_with_multiple_substances(self, mock_find):
         mock_find.return_value = None
 
@@ -219,8 +219,8 @@ class ReportComprehensiveTest(APITestCase):
         Substance.objects.all().delete()
         User.objects.all().delete()
 
-    @patch("reports.services.patient_service.get_patient_by_guid")
-    @patch("reports.services.finders.find")
+    @patch("patients.services.patients.patient_service.get_patient_by_guid")
+    @patch("reports.services.reports.finders.find")
     def test_comprehensive_report_generation_happy_path(
         self, mock_find, mock_get_patient
     ):

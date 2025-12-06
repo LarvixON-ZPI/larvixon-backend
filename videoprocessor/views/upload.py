@@ -7,14 +7,14 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
-from patients.services import patient_service
+from patients.services.patients import patient_service
 from patients.errors import (
     PatientServiceUnavailableError,
     PatientServiceResponseError,
 )
 from videoprocessor.views.base_video_upload_mixin import BaseVideoUploadMixin
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class VideoUploadSerializer(serializers.Serializer):

@@ -1,12 +1,12 @@
 import os
 import logging
 from io import BytesIO
-from typing import Optional
 from django.utils import timezone
 from django.contrib.staticfiles import finders
 from reportlab.lib.pagesizes import A4
 from analysis.models import VideoAnalysis
-from patients.services import patient_service
+from analysis.services.analysis import AnalysisService
+from patients.services.patients import patient_service
 from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.platypus import (
@@ -28,8 +28,9 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ReportService:
-    def generate_report(self, pk, user) -> bytes:
-        analysis: VideoAnalysis | None = ReportService._get_user_analysis(pk, user)
+    @staticmethod
+    def generate_report(pk, user) -> bytes:
+        analysis: VideoAnalysis | None = AnalysisService.get_user_analysis(pk, user)
         if analysis is None:
             raise AnalysisNotFoundError()
 
@@ -42,14 +43,6 @@ class ReportService:
         except Exception as e:
             logger.error(f"Failed to generate report for analysis {pk}: {str(e)}")
             raise ReportError("PDF generation failed") from e
-
-    @staticmethod
-    def _get_user_analysis(pk: int, user) -> Optional[VideoAnalysis]:
-        try:
-            return VideoAnalysis.objects.get(pk=pk, user=user)
-        except VideoAnalysis.DoesNotExist:
-            logger.info(f"Analysis {pk} not found for user {user.id}")
-            return None
 
     @staticmethod
     def _is_analysis_completed(analysis: VideoAnalysis) -> bool:

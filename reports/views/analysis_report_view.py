@@ -5,7 +5,7 @@ from rest_framework import status
 import logging
 
 from reports.errors import AnalysisNotCompletedError, AnalysisNotFoundError, ReportError
-from reports.services import ReportService
+from reports.services.reports import ReportService
 from reports.renderers import PDFRenderer
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -17,9 +17,8 @@ class AnalysisReportView(APIView):
 
     def get(self, request, pk) -> Response:
         """Generate and return PDF report for a specific analysis."""
-        report_service = ReportService()
         try:
-            bytes = report_service.generate_report(pk, request.user)
+            bytes = ReportService.generate_report(pk, request.user)
 
             return self.create_response(bytes, pk)
         except AnalysisNotFoundError:

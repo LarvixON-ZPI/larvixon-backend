@@ -1,22 +1,19 @@
 import sys
 from unittest.mock import patch, Mock
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from rest_framework.test import APITestCase
 from django.core.cache import cache
 from rest_framework.test import APIRequestFactory, force_authenticate
 from rest_framework.request import Request
 from rest_framework.response import Response
-import requests
 
 from accounts.models import User
 from patients.views.get_patient_view import GetPatientView
 from patients.views.search_patients_view import SearchPatientsView
-from patients.services import patient_service
 from patients.errors import (
     PatientServiceUnavailableError,
     PatientServiceResponseError,
 )
-from larvixon_site.settings import MOCK_PATIENT_SERVICE
 from tests.common import TestFixtures, run_tests
 
 
@@ -350,7 +347,7 @@ class TestPatientViews(APITestCase):
         User.objects.all().delete()
         cache.clear()
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.patients.requests.get")
     def test_get_patient_success(self, mock_get: Mock) -> None:
         """Test successful patient retrieval with valid GUID."""
         guid = "ab758f9b-0298-4823-b144-ae0db20bc215"
@@ -373,7 +370,7 @@ class TestPatientViews(APITestCase):
         self.assertEqual(response.data["first_name"], "Aurelia")
         self.assertEqual(response.data["last_name"], "Jędruszczak")
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.patients.requests.get")
     def test_get_patient_not_found(self, mock_get: Mock) -> None:
         """Test patient retrieval with non-existent GUID."""
         guid = "99999999-9999-9999-9999-999999999999"
@@ -391,7 +388,7 @@ class TestPatientViews(APITestCase):
         self.assertIn("detail", response.data)
         self.assertEqual(response.data["detail"], "Patient not found.")
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.patients.requests.get")
     def test_get_patient_invalid_guid_format(self, mock_get: Mock) -> None:
         """Test patient retrieval with malformed GUID."""
         invalid_guids = [
@@ -418,7 +415,7 @@ class TestPatientViews(APITestCase):
                 # Invalid GUIDs should return 404 (not found)
                 self.assertEqual(response.status_code, 404)
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.patients.requests.get")
     def test_get_patient_empty_guid(self, mock_get: Mock) -> None:
         """Test patient retrieval with empty GUID returns 404."""
         mock_response = Mock()
@@ -442,7 +439,7 @@ class TestPatientViews(APITestCase):
 
         self.assertEqual(response.status_code, 401)
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.patients.requests.get")
     def test_search_patients_success(self, mock_get: Mock) -> None:
         """Test successful patient search."""
         mock_response = Mock()
@@ -459,7 +456,7 @@ class TestPatientViews(APITestCase):
         self.assertIsInstance(response.data, list)
         self.assertEqual(len(response.data), 6)
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.patients.requests.get")
     def test_search_patients_with_search_term(self, mock_get: Mock) -> None:
         """Test patient search with search term."""
         search_term = "Aurelia"
@@ -495,7 +492,7 @@ class TestPatientViews(APITestCase):
             or search_term.lower() in patient["last_name"].lower()
         )
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.patients.requests.get")
     def test_search_patients_no_results(self, mock_get: Mock) -> None:
         """Test patient search with search term that has no matches."""
         search_term = "NonExistentPatient12345"
@@ -519,7 +516,7 @@ class TestPatientViews(APITestCase):
         self.assertIsInstance(response.data, list)
         self.assertEqual(len(response.data), 0)
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.patients.requests.get")
     def test_search_patients_empty_search_term(self, mock_get: Mock) -> None:
         """Test patient search with empty search term."""
         mock_response = Mock()
@@ -535,7 +532,7 @@ class TestPatientViews(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.data, list)
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.patients.requests.get")
     def test_search_patients_special_characters(self, mock_get: Mock) -> None:
         """Test patient search with special characters in search term."""
         special_chars = ["%", "&", "ą", "ł", "ż"]

@@ -1,14 +1,12 @@
-from datetime import timedelta
 import os
 import logging
 from celery import shared_task
 from django.utils import timezone
 from analysis.models import Substance, VideoAnalysis
-from larvixon_site.settings import VIDEO_LIFETIME_DAYS
-from .ml_service import predict_video
 from django.core.files.storage import default_storage
 from tempfile import NamedTemporaryFile
-from datetime import datetime
+
+from videoprocessor.services.ml_service import predict_video
 
 logger = logging.getLogger(__name__)
 

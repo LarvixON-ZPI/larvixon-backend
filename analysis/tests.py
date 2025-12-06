@@ -1,5 +1,6 @@
 import os
 import shutil
+from typing import Optional
 from django.urls import reverse
 from django.utils import timezone
 import datetime
@@ -49,13 +50,13 @@ class VideoAnalysisTest(APITestCase):
 
         # Patch the patient service methods
         self.patcher_get_patient = patch(
-            "patients.services.patient_service.get_patient_by_guid"
+            "patients.services.patients.patient_service.get_patient_by_guid"
         )
         self.patcher_search_patients = patch(
-            "patients.services.patient_service.search_patients"
+            "patients.services.patients.patient_service.search_patients"
         )
         self.patcher_get_patients_by_guids = patch(
-            "patients.services.patient_service.get_patients_by_guids"
+            "patients.services.patients.patient_service.get_patients_by_guids"
         )
 
         self.mock_get_patient = self.patcher_get_patient.start()
@@ -88,7 +89,7 @@ class VideoAnalysisTest(APITestCase):
         )
 
         # Configure mock for search_patients to return appropriate results based on search term
-        def mock_search_patients_side_effect(search_term=None):
+        def mock_search_patients_side_effect(search_term: Optional[str]):
             if not search_term:
                 return [self.mock_patient_data1, self.mock_patient_data2]
 
