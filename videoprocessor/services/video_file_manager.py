@@ -1,9 +1,12 @@
 import tempfile
 import cv2
+import logging
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 import os
 from django.core.files.storage import Storage
+
+logger = logging.getLogger(__name__)
 
 THUMBNAIL_FILENAME_SUFFIX = "_thumb.jpg"
 
@@ -26,6 +29,7 @@ class VideoFileManager:
             return filename, video_path
 
         except Exception as e:
+            logger.exception(f"Failed to save video file {video_file.name}: {e}")
             raise IOError(f"Failed to save video file: {e}")
 
     def extract_and_save_first_frame(self, video_file):

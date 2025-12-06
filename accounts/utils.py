@@ -1,8 +1,11 @@
 import os
 import uuid
+import logging
 from allauth.mfa.models import Authenticator
 from allauth.mfa import totp
 import pyotp
+
+logger = logging.getLogger(__name__)
 
 
 def verify_mfa_code(user, mfa_code, is_confirmed_check=True):
@@ -14,6 +17,7 @@ def verify_mfa_code(user, mfa_code, is_confirmed_check=True):
     try:
         device = Authenticator.objects.get(user=user, type=Authenticator.Type.TOTP)
     except Authenticator.DoesNotExist:
+        logger.warning(f"MFA device not found for user {user.id}")
         return False, "MFA device not found.", None
 
     if is_confirmed_check and not device.last_used_at:
