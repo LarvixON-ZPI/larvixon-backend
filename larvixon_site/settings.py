@@ -97,7 +97,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
-    "larvixon_site.middleware.RequestLoggingMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -111,9 +110,20 @@ MIDDLEWARE = [
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{levelname}] {asctime} {name} {module}.{funcName}:{lineno} - {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "[{levelname}] {name} - {message}",
+            "style": "{",
+        },
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
     },
     "root": {
@@ -124,10 +134,41 @@ LOGGING = {
         "django": {
             "handlers": ["console"],
             "level": "INFO",
-            "propagate": True,
+            "propagate": False,
+        },
+        "accounts": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "analysis": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "patients": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "reports": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "videoprocessor": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
         },
     },
 }
+
+if IS_TESTING:
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": True,
+    }
 
 ROOT_URLCONF = "larvixon_site.urls"
 

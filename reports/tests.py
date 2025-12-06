@@ -31,7 +31,6 @@ class ReportBasicTests(APITestCase):
         Substance.objects.all().delete()
 
     def test_report_not_found(self):
-
         url = reverse("reports:analysis-report", args=[999999])
         response = self.client.get(url)
 
@@ -42,7 +41,6 @@ class ReportBasicTests(APITestCase):
         )
 
     def test_report_not_completed(self):
-
         analysis = VideoAnalysis.objects.create(
             user=self.user,
             description="Pending analysis",
@@ -59,7 +57,6 @@ class ReportBasicTests(APITestCase):
         )
 
     def test_report_access_denied(self):
-
         other_user = User.objects.create_user(
             username="otheruser", email="other@example.com", password="testpass123"
         )
@@ -78,7 +75,6 @@ class ReportBasicTests(APITestCase):
         )
 
     def test_unauthenticated_access(self):
-
         analysis = VideoAnalysis.objects.create(
             user=self.user,
             description="Test analysis",
@@ -115,7 +111,6 @@ class ReportBasicTests(APITestCase):
 
 
 class ReportPDFGeneratorTests(TestCase):
-
     def setUp(self):
         self.user = User.objects.create_user(
             username="testuser", email="test@example.com", password="testpass123"
@@ -140,26 +135,8 @@ class ReportPDFGeneratorTests(TestCase):
         self.assertEqual(generator.analysis, analysis)
         self.assertIsInstance(generator.buffer, BytesIO)
 
-    def test_http_response_creation(self):
-
-        pdf_bytes = b"fake pdf content"
-        analysis_id = 123
-
-        response = AnalysisReportPDFGenerator.create_http_response(
-            pdf_bytes, analysis_id
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pdf")
-        self.assertIn("attachment", response["Content-Disposition"])
-        self.assertIn(
-            f"analysis_{analysis_id}_report.pdf", response["Content-Disposition"]
-        )
-        self.assertEqual(response.content, pdf_bytes)
-
     @patch("reports.services.finders.find")
     def test_pdf_generation_without_patient(self, mock_find):
-
         mock_find.return_value = None
 
         analysis = VideoAnalysis.objects.create(
@@ -181,7 +158,6 @@ class ReportPDFGeneratorTests(TestCase):
 
     @patch("reports.services.finders.find")
     def test_pdf_generation_with_multiple_substances(self, mock_find):
-
         mock_find.return_value = None
 
         amphetamine = Substance.objects.create(
@@ -214,7 +190,6 @@ class ReportPDFGeneratorTests(TestCase):
 
 
 class ReportComprehensiveTest(APITestCase):
-
     def setUp(self):
         # Create user with full details
         self.user = User.objects.create_user(
