@@ -6,7 +6,7 @@ from analysis.models import Substance, VideoAnalysis
 from django.core.files.storage import default_storage
 from tempfile import NamedTemporaryFile
 
-from videoprocessor.services.ml_service import predict_video
+from videoprocessor.services import ml_service
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def process_video_task(analysis_id: int) -> None:
                 logger.info(
                     f"Processing video at {video_path} for analysis ID {analysis_id}"
                 )
-                results = predict_video(video_path)
+                results = ml_service.predict_video(video_path)
 
         if not results:
             analysis.status = VideoAnalysis.Status.FAILED

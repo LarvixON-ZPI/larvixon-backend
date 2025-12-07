@@ -333,6 +333,7 @@ class TestPatientViews(APITestCase):
         ],
     }
 
+    # todo: use reverse
     def setUp(self) -> None:
         self.factory = APIRequestFactory()
         user_data: dict[str, str] = TestFixtures.get_test_user_data()

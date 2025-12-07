@@ -6,7 +6,7 @@ from django.core.files.storage import default_storage
 import os
 from django.core.files.storage import Storage
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 THUMBNAIL_FILENAME_SUFFIX = "_thumb.jpg"
 
@@ -14,11 +14,11 @@ THUMBNAIL_FILENAME_SUFFIX = "_thumb.jpg"
 class VideoFileManager:
     """
     Manages the saving of video files and extraction of thumbnails.
-    Uses Django's default_storage backend.
+    Uses Django's storage backend (injectable for testing).
     """
 
-    def __init__(self, storage: Storage = default_storage):
-        self.fs = storage
+    def __init__(self, storage: Storage | None = None):
+        self.fs = storage or default_storage
 
     def save_video_file(self, video_file):
         try:

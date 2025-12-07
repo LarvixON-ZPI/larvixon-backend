@@ -14,7 +14,14 @@ MAX_FILE_SIZE = MAX_GIGABYTES * 1024**3
 
 
 class BaseVideoUploadMixin:
-    _video_manager = VideoFileManager()
+    video_manager = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.video_manager is None:
+            self._video_manager = VideoFileManager()
+        else:
+            self._video_manager = self.video_manager
 
     def validate_file_size(self, file_size):
         if file_size > MAX_FILE_SIZE:
