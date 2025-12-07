@@ -14,7 +14,7 @@ from videoprocessor.errors import (
     VideoWrongFormatError,
 )
 from videoprocessor.services import VideoFileManager
-from patients.services.patients import patient_service
+from patients.services import patient_service
 
 MAX_GIGABYTES = 3
 GIGABYTE = 1024**3

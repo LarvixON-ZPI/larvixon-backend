@@ -49,13 +49,13 @@ class AnalysisViewsTest(APITestCase):
 
         # Patch the patient service methods
         self.patcher_get_patient = patch(
-            "patients.services.patients.patient_service.get_patient_by_guid"
+            "patients.services.patient_service.patient_service.get_patient_by_guid"
         )
         self.patcher_search_patients = patch(
-            "patients.services.patients.patient_service.search_patients"
+            "patients.services.patient_service.patient_service.search_patients"
         )
         self.patcher_get_patients_by_guids = patch(
-            "patients.services.patients.patient_service.get_patients_by_guids"
+            "patients.services.patient_service.patient_service.get_patients_by_guids"
         )
 
         self.mock_get_patient = self.patcher_get_patient.start()

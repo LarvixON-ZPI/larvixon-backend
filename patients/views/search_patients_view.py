@@ -5,7 +5,7 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
-from patients.services.patients import patient_service
+from patients.services import patient_service
 from patients.serializers import PatientSerializer
 
 

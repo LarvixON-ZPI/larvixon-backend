@@ -120,7 +120,7 @@ class ReportViewsTests(APITestCase):
         )
         self.assertTrue(response.content.startswith(b"%PDF"))
 
-    @patch("patients.services.patients.patient_service.get_patient_by_guid")
+    @patch("patients.services.patient_service.patient_service.get_patient_by_guid")
     @patch("reports.services.reports.finders.find")
     def test_comprehensive_report_generation_happy_path(
         self, mock_find, mock_get_patient

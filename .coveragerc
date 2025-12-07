@@ -13,6 +13,7 @@ omit =
     *.sh
     docker-compose*.yml
     */admin.py
+    *mock*
 timid = True
 
 [report]

@@ -23,7 +23,7 @@ from django.contrib.staticfiles import finders
 from analysis.errors import AnalysisNotFoundError
 from analysis.models import VideoAnalysis
 from analysis.services.analysis import AnalysisService
-from patients.services.patients import patient_service
+from patients.services import patient_service
 from reports.errors import AnalysisNotCompletedError, ReportError
 
 

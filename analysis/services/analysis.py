@@ -12,7 +12,7 @@ from analysis.errors import (
     AnalysisTooOldError,
     AnalysisVideoNotFoundError,
 )
-from patients.services.patients import patient_service
+from patients.services import patient_service
 from videoprocessor.tasks import process_video_task
 
 logger: logging.Logger = logging.getLogger(__name__)

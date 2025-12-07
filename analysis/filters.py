@@ -3,7 +3,7 @@ import logging
 import django_filters
 from django.db.models import Max, Q
 
-from patients.services.patients import patient_service
+from patients.services import patient_service
 from patients.errors import PatientServiceError
 from .models import VideoAnalysis
 
