@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Optional
+from typing import Dict
 from larvixon_site.settings import MOCK_ML
 from .mock_ml_predict import mock_ml_predict
 from .send_video_to_ml import send_video_to_ml
@@ -7,7 +7,7 @@ from .send_video_to_ml import send_video_to_ml
 logger = logging.getLogger(__name__)
 
 
-def predict_video(video_path: str) -> Optional[Dict[str, float]]:
+def predict_video(video_path: str) -> Dict[str, float] | None:
     """
     Predict substance from video using ML service.
 

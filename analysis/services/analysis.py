@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 from analysis.models import VideoAnalysis
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -7,7 +6,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 class AnalysisService:
     @staticmethod
-    def get_user_analysis(pk: int, user) -> Optional[VideoAnalysis]:
+    def get_user_analysis(pk: int, user) -> VideoAnalysis | None:
         try:
             return VideoAnalysis.objects.get(pk=pk, user=user)
         except VideoAnalysis.DoesNotExist:

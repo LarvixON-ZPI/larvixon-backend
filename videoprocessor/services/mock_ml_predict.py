@@ -1,5 +1,4 @@
 import random
-from typing import Optional
 
 MOCK_SUBSTANCES: list[str] = [
     "cocaine",
@@ -12,7 +11,7 @@ MOCK_SUBSTANCES: list[str] = [
 SIMULATE_NONE_FOUND = False
 
 
-def mock_ml_predict(video_path: str) -> Optional[dict[str, float]]:
+def mock_ml_predict(video_path: str) -> dict[str, float] | None:
     """
     Returns dictionary of {substance_name: confidence}
     """

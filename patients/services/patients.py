@@ -1,6 +1,6 @@
 import requests
 from abc import ABC, abstractmethod
-from typing import Optional, List
+from typing import List
 import logging
 from django.core.cache import cache
 
@@ -25,15 +25,15 @@ class BasePatientService(ABC):
     @abstractmethod
     def search_patients(
         self,
-        first_name: Optional[str] = None,
-        last_name: Optional[str] = None,
-        pesel: Optional[str] = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
+        pesel: str | None = None,
     ) -> List[dict]:
         """Search for patients by first name, last name, or PESEL."""
         pass
 
     @abstractmethod
-    def get_patient_by_guid(self, guid: str) -> Optional[dict]:
+    def get_patient_by_guid(self, guid: str) -> dict | None:
         """Get a single patient by their GUID."""
         pass
 
@@ -62,9 +62,9 @@ class MockPatientService(BasePatientService):
 
     def search_patients(
         self,
-        first_name: Optional[str] = None,
-        last_name: Optional[str] = None,
-        pesel: Optional[str] = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
+        pesel: str | None = None,
     ) -> List[dict]:
         mock_patient = self._get_mock_patient()
 
@@ -82,7 +82,7 @@ class MockPatientService(BasePatientService):
 
         return [mock_patient]
 
-    def get_patient_by_guid(self, guid: str) -> Optional[dict]:
+    def get_patient_by_guid(self, guid: str) -> dict | None:
         mock_patient = self._get_mock_patient()
         if mock_patient["id"] == guid:
             return mock_patient
@@ -111,9 +111,9 @@ class APIPatientService(BasePatientService):
 
     def search_patients(
         self,
-        first_name: Optional[str] = None,
-        last_name: Optional[str] = None,
-        pesel: Optional[str] = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
+        pesel: str | None = None,
     ) -> List[dict]:
         cache_key = f"patient_search:first_name={first_name or ''}:last_name={last_name or ''}:pesel={pesel or ''}"
         cached = cache.get(cache_key)
@@ -158,7 +158,7 @@ class APIPatientService(BasePatientService):
                 f"Unexpected error in patient service: {e}"
             ) from e
 
-    def get_patient_by_guid(self, guid: str) -> Optional[dict]:
+    def get_patient_by_guid(self, guid: str) -> dict | None:
         cache_key = f"patient:{guid}"
         cached = cache.get(cache_key)
         if cached is not None:

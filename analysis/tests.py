@@ -1,6 +1,5 @@
 import os
 import shutil
-from typing import Optional
 from django.urls import reverse
 from django.utils import timezone
 import datetime
@@ -90,9 +89,9 @@ class VideoAnalysisTest(APITestCase):
 
         # Configure mock for search_patients to return appropriate results based on search parameters
         def mock_search_patients_side_effect(
-            first_name: Optional[str] = None,
-            last_name: Optional[str] = None,
-            pesel: Optional[str] = None,
+            first_name: str | None = None,
+            last_name: str | None = None,
+            pesel: str | None = None,
         ):
             if not first_name and not last_name and not pesel:
                 return [self.mock_patient_data1, self.mock_patient_data2]

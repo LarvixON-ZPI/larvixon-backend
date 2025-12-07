@@ -2,13 +2,12 @@ import requests
 import json
 import os
 import logging
-from typing import Optional
 from larvixon_site.settings import ML_ENDPOINT_URL
 
 logger = logging.getLogger(__name__)
 
 
-def send_video_to_ml(video_path: str) -> Optional[dict[str, float]]:
+def send_video_to_ml(video_path: str) -> dict[str, float] | None:
     """
     Sends a video file as multipart/form-data to the external ML endpoint
     and returns a dictionary of predictions with confidence scores.

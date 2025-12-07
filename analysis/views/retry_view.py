@@ -5,7 +5,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from django.utils import timezone
 from datetime import timedelta
-from typing import Optional
 import logging
 from analysis.models import VideoAnalysis
 from analysis.serializers import RetryResponseSerializer
@@ -16,7 +15,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 logger = logging.getLogger(__name__)
 
 
-def validate_analysis_status(analysis: VideoAnalysis) -> Optional[Response]:
+def validate_analysis_status(analysis: VideoAnalysis) -> Response | None:
     if analysis.status != VideoAnalysis.Status.FAILED:
         return Response(
             {"error": "Only failed analyses can be retried."},
@@ -25,7 +24,7 @@ def validate_analysis_status(analysis: VideoAnalysis) -> Optional[Response]:
     return None
 
 
-def validate_analysis_age(analysis: VideoAnalysis) -> Optional[Response]:
+def validate_analysis_age(analysis: VideoAnalysis) -> Response | None:
     cutoff_date = timezone.now() - timedelta(days=int(VIDEO_LIFETIME_DAYS))
     if analysis.created_at < cutoff_date:
         return Response(
@@ -37,7 +36,7 @@ def validate_analysis_age(analysis: VideoAnalysis) -> Optional[Response]:
     return None
 
 
-def validate_video_exists(analysis: VideoAnalysis) -> Optional[Response]:
+def validate_video_exists(analysis: VideoAnalysis) -> Response | None:
     if not analysis.video:
         return Response(
             {"error": "Video file no longer exists. Cannot retry this analysis."},
