@@ -1,22 +1,26 @@
-from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework import generics, status, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.mfa.utils import is_mfa_enabled
+import logging
 
 # App's local imports
 from ..models import User
 from ..serializers import (
-    UserRegistrationSerializer,
-    UserLoginSerializer,
     UserSerializer,
     MFALoginSerializer,
 )
-from ..utils import verify_mfa_code
+from ..services.authentication import AuthenticationService
+from ..errors import (
+    MFARequiredError,
+    InvalidMFACodeError,
+    InvalidTokenError,
+    MissingRefreshTokenError,
+)
+
+logger = logging.getLogger(__name__)
 
 
 @extend_schema(
@@ -29,23 +33,16 @@ from ..utils import verify_mfa_code
     tags=["Authentication"],
 )
 class UserRegistrationView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs) -> Response:
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-
-        # Generate tokens
-        refresh = RefreshToken.for_user(user)
+        user, tokens = AuthenticationService.register_user(request.data)
 
         return Response(
             {
                 "user": UserSerializer(user).data,
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
+                "refresh": tokens["refresh"],
+                "access": tokens["access"],
                 "message": "User registered successfully",
             },
             status=status.HTTP_201_CREATED,
@@ -67,35 +64,27 @@ class UserLoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        serializer = UserLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
+        email = request.data.get("email")
+        password = request.data.get("password")
+        mfa_code = request.data.get("mfa_code")
 
-        if is_mfa_enabled(user):
-            mfa_code = request.data.get("mfa_code")
-            if not mfa_code:
-                return Response(
-                    {"detail": "MFA is required."}, status=status.HTTP_202_ACCEPTED
-                )
-
-            is_valid, error_message, _ = verify_mfa_code(user, mfa_code)
-            if not is_valid:
-                return Response(
-                    {"detail": error_message}, status=status.HTTP_400_BAD_REQUEST
-                )
-
-        # If MFA is not enabled or the code was valid, issue tokens
-        refresh = RefreshToken.for_user(user)
-
-        return Response(
-            {
-                "user": UserSerializer(user).data,
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-                "message": "Login successful",
-            },
-            status=status.HTTP_200_OK,
-        )
+        try:
+            user, tokens = AuthenticationService.login_user(email, password, mfa_code)
+            return Response(
+                {
+                    "user": UserSerializer(user).data,
+                    "refresh": tokens["refresh"],
+                    "access": tokens["access"],
+                    "message": "Login successful",
+                },
+                status=status.HTTP_200_OK,
+            )
+        except MFARequiredError:
+            return Response(
+                {"detail": "MFA is required."}, status=status.HTTP_202_ACCEPTED
+            )
+        except InvalidMFACodeError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserLogoutView(APIView):
@@ -103,64 +92,56 @@ class UserLogoutView(APIView):
     serializer_class = None
 
     def post(self, request) -> Response:
+        refresh_token = request.data.get("refresh")
+
         try:
-            refresh_token = request.data["refresh"]
-            token = RefreshToken(refresh_token)
-            token.blacklist()
+            AuthenticationService.logout_user(refresh_token)
             return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
-        except KeyError:
+        except MissingRefreshTokenError:
+            logger.warning("Logout attempted without refresh token")
             return Response(
                 {"error": "Refresh token not provided"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        except TokenError:
-            return Response(
-                {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
-            )
+        except InvalidTokenError as e:
+            logger.warning(f"Invalid token during logout: {e}")
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SocialLoginJWTViewMixin:
     def post(self, request, *args, **kwargs):
         # Authenticate the user with the social provider (Google, Facebook, etc.)
-        super().post(request, *args, **kwargs)
-
+        response = super().post(request, *args, **kwargs)
         user = request.user
 
-        if user.is_authenticated:
-            # Check if MFA is enabled for this user after a successful social login
-            if is_mfa_enabled(user):
-                mfa_code = request.data.get("mfa_code")
-                if not mfa_code:
-                    return Response(
-                        {"detail": "MFA is required."}, status=status.HTTP_202_ACCEPTED
-                    )
+        if not user.is_authenticated:
+            logger.error("Social login failed - user not authenticated")
+            return Response(
+                {"error": "Social login failed. Authentication was not successful."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-                is_valid, error_message, _ = verify_mfa_code(user, mfa_code)
-                if not is_valid:
-                    return Response(
-                        {"detail": error_message}, status=status.HTTP_400_BAD_REQUEST
-                    )
+        mfa_code = request.data.get("mfa_code")
 
-            # If no MFA is enabled or the MFA code was valid, issue tokens
-            refresh = RefreshToken.for_user(user)
-            access = str(refresh.access_token)
-
+        try:
+            tokens = AuthenticationService.social_login(user, mfa_code)
             user_data = UserSerializer(user).data
 
             return Response(
                 {
                     "user": user_data,
-                    "access": access,
-                    "refresh": str(refresh),
+                    "access": tokens["access"],
+                    "refresh": tokens["refresh"],
                     "message": "Social login successful",
                 },
                 status=status.HTTP_200_OK,
             )
-        else:
+        except MFARequiredError:
             return Response(
-                {"error": "Social login failed. Authentication was not successful."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": "MFA is required."}, status=status.HTTP_202_ACCEPTED
             )
+        except InvalidMFACodeError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @extend_schema(

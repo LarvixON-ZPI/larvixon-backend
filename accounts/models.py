@@ -1,13 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-import warnings
 import logging
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import UserManager
 from phonenumber_field.modelfields import PhoneNumberField
-import os
 
 from accounts.utils import user_picture_upload_to
 
@@ -83,7 +80,7 @@ class UserProfile(models.Model):
                     and old_profile.profile_picture != self.profile_picture
                 ):
                     old_profile.profile_picture.delete(save=False)
-                    logger.info(f"Old profile picture deleted for user {self.user.id}")
+                    logger.info(f"Old profile picture deleted for user {self.user.pk}")
         except UserProfile.DoesNotExist:
             pass
 

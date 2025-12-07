@@ -1,17 +1,24 @@
+from rest_framework.request import Request
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.exceptions import ValidationError
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-from django.db import transaction
-from ..models import User, UserProfile
-from analysis.models import VideoAnalysis
+import logging
+
+from accounts.models import User, UserProfile
+
 from ..serializers import (
     UserSerializer,
     UserProfileSerializer,
     PasswordChangeSerializer,
     UserStatsSerializer,
 )
+from ..services.profile import ProfileService
+from ..services.authentication import AuthenticationService
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -28,29 +35,24 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
 
     parser_classes = (MultiPartParser, FormParser)
 
-    def get_object(self):
-        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
-        return profile
+    def get_object(self) -> UserProfile:
+        user = self.request.user
+        if not isinstance(user, User):
+            raise TypeError("Authenticated user is not of type User")
+
+        return ProfileService.get_or_create_profile(user)
 
 
 class UserProfileStats(generics.RetrieveAPIView):
     serializer_class = UserStatsSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    @transaction.atomic
-    def get_object(self):
+    def get_object(self) -> dict[str, int]:
         user = self.request.user
-        analyses = VideoAnalysis.objects.filter(user=user)
+        if not isinstance(user, User):
+            raise TypeError("Authenticated user is not of type User")
 
-        stats = {
-            "total_analyses": analyses.count(),
-            "completed_analyses": analyses.filter(status="completed").count(),
-            "pending_analyses": analyses.filter(status="pending").count(),
-            "processing_analyses": analyses.filter(status="processing").count(),
-            "failed_analyses": analyses.filter(status="failed").count(),
-        }
-
-        return stats
+        return ProfileService.get_user_stats(user)
 
 
 class PasswordChangeView(APIView):
@@ -63,16 +65,23 @@ class PasswordChangeView(APIView):
         responses={200: OpenApiResponse(description="Password changed successfully")},
         tags=["Authentication"],
     )
-    def post(self, request) -> Response:
-        serializer = PasswordChangeSerializer(
-            data=request.data, context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
+    def post(self, request: Request) -> Response:
+        old_password = request.data.get("old_password")
+        new_password = request.data.get("new_password")
+        confirm_password = request.data.get("confirm_password")
 
-        user: User = request.user
-        user.set_password(serializer.validated_data["new_password"])
-        user.save()
+        user = self.request.user
+        if not isinstance(user, User):
+            raise TypeError("Authenticated user is not of type User")
 
-        return Response(
-            {"message": "Password changed successfully"}, status=status.HTTP_200_OK
-        )
+        try:
+            ProfileService.change_password(
+                user, old_password, new_password, confirm_password
+            )
+
+            return Response(
+                {"message": "Password changed successfully"}, status=status.HTTP_200_OK
+            )
+        except ValidationError as e:
+            logger.error(f"Error changing password for user {user.pk}: {e}")
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)

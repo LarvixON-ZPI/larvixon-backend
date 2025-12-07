@@ -1,8 +1,11 @@
+import logging
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from .models import User, UserProfile
 from phonenumber_field.serializerfields import PhoneNumberField
+
+logger = logging.getLogger(__name__)
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -97,12 +100,16 @@ class PasswordChangeSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs["new_password"] != attrs["confirm_password"]:
+            logger.warning("New password and confirm password do not match.")
             raise serializers.ValidationError("New passwords don't match.")
         return attrs
 
     def validate_old_password(self, value):
         user = self.context["request"].user
         if not user.check_password(value):
+            logger.warning(
+                f"User {user.pk} provided incorrect old password for change."
+            )
             raise serializers.ValidationError("Old password is incorrect.")
         return value
 

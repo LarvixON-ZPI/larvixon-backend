@@ -1,26 +1,24 @@
+import logging
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from django.utils import timezone
 
-# Drf Spectacular imports
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
-# Allauth MFA imports
-from allauth.mfa.utils import is_mfa_enabled
-from allauth.mfa import totp
-from allauth.mfa.models import Authenticator
-
-# Python Standard Library and third-party utility imports
-import pyotp
-import qrcode
-from io import BytesIO
 import base64
 
-# App's local imports
+from accounts.errors import (
+    MFAAlreadyEnabledError,
+    MFANotEnabledError,
+    MFADeviceNotFoundError,
+    InvalidMFACodeError,
+)
+from accounts.services.mfa import MFAService
+
 from ..serializers import MFAVerifySerializer
-from ..utils import verify_mfa_code
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class MFASetupView(APIView):
@@ -41,37 +39,21 @@ class MFASetupView(APIView):
         tags=["Authentication"],
     )
     def get(self, request):
-        if is_mfa_enabled(request.user):
+        try:
+            _, secret, qr_code_base64 = MFAService.setup(request.user)
+        except MFAAlreadyEnabledError:
+            logger.warning(
+                f"User {request.user.pk} attempted to setup MFA but it is already enabled."
+            )
             return Response(
                 {"detail": "MFA is already enabled."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # TOTPDevice instance to generate the secret key
-        pyotp_instance = pyotp.TOTP(pyotp.random_base32())
-        secret = pyotp_instance.secret.encode()  # Get the secret and encode it
-
-        # Authenticator object with the generated secret
-        device = Authenticator.objects.create(
-            user=request.user,
-            type=Authenticator.Type.TOTP,
-            data={"secret": secret.decode()},
-        )
-
-        # Generate the QR code URI using the secret
-        otp_uri = pyotp_instance.provisioning_uri(
-            name=request.user.email, issuer_name="Larvixon"
-        )
-
-        img = qrcode.make(otp_uri)
-        buf = BytesIO()
-        img.save(buf, format="PNG")  # type: ignore[call-arg]
-        qr_code_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
-
         return Response(
             {
                 "qr_code": f"data:image/png;base64,{qr_code_base64}",
-                "secret": base64.b32encode(secret).decode(),
+                "secret": secret,
             },
             status=status.HTTP_200_OK,
         )
@@ -94,30 +76,24 @@ class MFAVerifyView(APIView):
         serializer.is_valid(raise_exception=True)
         code = serializer.validated_data["code"]
 
-        is_valid, error_message, device = verify_mfa_code(
-            request.user, code, is_confirmed_check=False
-        )
-
-        if not device:
+        try:
+            MFAService.activate_mfa_device(request.user, code)
+            return Response(
+                {"detail": "MFA successfully activated."}, status=status.HTTP_200_OK
+            )
+        except MFADeviceNotFoundError:
+            logger.warning(f"No MFA device found for user {request.user.pk}")
             return Response(
                 {"detail": "No MFA device found."}, status=status.HTTP_400_BAD_REQUEST
             )
-
-        if is_valid:
-            if not device.last_used_at:
-                device.last_used_at = timezone.now()
-                device.save()
-                return Response(
-                    {"detail": "MFA successfully activated."}, status=status.HTTP_200_OK
-                )
-            else:
-                return Response(
-                    {"detail": "MFA device is already confirmed."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-        else:
+        except InvalidMFACodeError as e:
+            logger.warning(f"Invalid MFA code for user {request.user.pk}")
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except MFAAlreadyEnabledError:
+            logger.warning(f"MFA device already confirmed for user {request.user.pk}")
             return Response(
-                {"detail": error_message}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "MFA device is already confirmed."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -134,19 +110,20 @@ class MFADeactivateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        if not is_mfa_enabled(request.user):
+        try:
+            MFAService.deactivate_mfa(request.user)
+            return Response(
+                {"detail": "MFA successfully deactivated."}, status=status.HTTP_200_OK
+            )
+        except MFANotEnabledError:
+            logger.warning(
+                f"User {request.user.pk} attempted to deactivate MFA but it's not enabled"
+            )
             return Response(
                 {"detail": "MFA is not enabled."}, status=status.HTTP_400_BAD_REQUEST
             )
-
-        try:
-            device = Authenticator.objects.get(
-                user=request.user, type=Authenticator.Type.TOTP
+        except MFADeviceNotFoundError:
+            logger.error(f"MFA enabled but device not found for user {request.user.pk}")
+            return Response(
+                {"detail": "MFA device not found."}, status=status.HTTP_400_BAD_REQUEST
             )
-            device.delete()
-        except Authenticator.DoesNotExist:
-            pass  # No device to delete
-
-        return Response(
-            {"detail": "MFA successfully deactivated."}, status=status.HTTP_200_OK
-        )
