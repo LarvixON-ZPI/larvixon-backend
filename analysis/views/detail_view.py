@@ -2,7 +2,7 @@ import logging
 from rest_framework import generics, permissions
 from analysis.models import VideoAnalysis
 from ..serializers import VideoAnalysisSerializer
-from patients.services.patients import patient_service
+from ..services.analysis import AnalysisService
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -18,23 +18,7 @@ class VideoAnalysisDetailView(generics.RetrieveUpdateDestroyAPIView):
         context = super().get_serializer_context()
 
         obj = self.get_object()
-        if not obj.patient_guid:
-            context["patient_details_map"] = {}
-            return context
-
-        try:
-            patient_details = patient_service.get_patient_by_guid(str(obj.patient_guid))
-            if patient_details:
-                context["patient_details_map"] = {
-                    str(obj.patient_guid): patient_details
-                }
-            else:
-                context["patient_details_map"] = {}
-        except Exception:
-            logger.error(
-                "Failed to fetch patient details for VideoAnalysisDetailView",
-                exc_info=True,
-            )
-            context["patient_details_map"] = {}
+        patient_details_map = AnalysisService.get_patient_details_for_analysis(obj)
+        context["patient_details_map"] = patient_details_map
 
         return context
