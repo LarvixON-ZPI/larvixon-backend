@@ -1,8 +1,8 @@
 import logging
 from larvixon_site.settings import MOCK_ML
 from .base_ml_service import BaseMLService
-from .mock_ml_predict import MockMLService
-from .send_video_to_ml import APIMLService
+from .mock_ml_service import MockMLService
+from .api_ml_service import APIMLService
 
 logger: logging.Logger = logging.getLogger(__name__)
 
