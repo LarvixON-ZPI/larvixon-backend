@@ -17,10 +17,6 @@ from tests.common import TestFixtures, run_tests, cleanup_test_media
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "larvixon_site.settings")
 
-import django
-
-django.setup()
-
 VIDEO_CONTENT = b"fake video content for testing"
 VIDEO_FILENAME = "test_video.mp4"
 VIDEO_CONTENT_TYPE = "video/mp4"

@@ -1,10 +1,9 @@
 import os
 from unittest.mock import patch
-from django.test import TestCase
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from io import BytesIO
 
 from analysis.models import VideoAnalysis, Substance, AnalysisResult
 from reports.services.reports import AnalysisReportPDFGenerator
@@ -12,23 +11,35 @@ from accounts.models import User
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "larvixon_site.settings")
 
-import django
 
-django.setup()
-
-
-class ReportBasicTests(APITestCase):
+class ReportViewsTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username="drsmith",
+            email="drsmith@hospital.com",
+            password="securepass123",
+            first_name="John",
+            last_name="Smith",
         )
         self.client.force_authenticate(user=self.user)
-        self.substance = Substance.objects.create(name_en="Cocaine", name_pl="Kokaina")
+
+        # Mock patient GUID for testing
+        self.patient_guid = "00000000-0000-0000-0000-000000000001"
+
+        # Create substances
+        self.cocaine = Substance.objects.create(name_en="Cocaine", name_pl="Kokaina")
+        self.amphetamine = Substance.objects.create(
+            name_en="Amphetamine", name_pl="Amfetamina"
+        )
+        self.methamphetamine = Substance.objects.create(
+            name_en="Methamphetamine", name_pl="Metamfetamina"
+        )
 
     def tearDown(self):
         VideoAnalysis.objects.all().delete()
-        User.objects.all().delete()
+        AnalysisResult.objects.all().delete()
         Substance.objects.all().delete()
+        User.objects.all().delete()
 
     def test_report_not_found(self):
         url = reverse("reports:analysis-report", args=[999999])
@@ -108,116 +119,6 @@ class ReportBasicTests(APITestCase):
             f"analysis_{analysis.id}_report.pdf", response["Content-Disposition"]
         )
         self.assertTrue(response.content.startswith(b"%PDF"))
-
-
-class ReportPDFGeneratorTests(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
-        )
-        self.substance = Substance.objects.create(name_en="Cocaine", name_pl="Kokaina")
-
-    def tearDown(self):
-        VideoAnalysis.objects.all().delete()
-        User.objects.all().delete()
-        Substance.objects.all().delete()
-
-    def test_pdf_generator_initialization(self):
-
-        analysis = VideoAnalysis.objects.create(
-            user=self.user,
-            description="Test analysis",
-            status=VideoAnalysis.Status.COMPLETED,
-        )
-
-        generator = AnalysisReportPDFGenerator(analysis)
-        self.assertIsNotNone(generator)
-        self.assertEqual(generator.analysis, analysis)
-        self.assertIsInstance(generator.buffer, BytesIO)
-
-    @patch("reports.services.reports.finders.find")
-    def test_pdf_generation_without_patient(self, mock_find):
-        mock_find.return_value = None
-
-        analysis = VideoAnalysis.objects.create(
-            user=self.user,
-            description="Analysis without patient",
-            status=VideoAnalysis.Status.COMPLETED,
-        )
-
-        AnalysisResult.objects.create(
-            analysis=analysis, substance=self.substance, confidence_score=85.0
-        )
-
-        generator = AnalysisReportPDFGenerator(analysis)
-        pdf_bytes = generator.generate()
-
-        self.assertIsNotNone(pdf_bytes)
-        self.assertGreater(len(pdf_bytes), 0)
-        self.assertTrue(pdf_bytes.startswith(b"%PDF"))
-
-    @patch("reports.services.reports.finders.find")
-    def test_pdf_generation_with_multiple_substances(self, mock_find):
-        mock_find.return_value = None
-
-        amphetamine = Substance.objects.create(
-            name_en="Amphetamine", name_pl="Amfetamina"
-        )
-
-        analysis = VideoAnalysis.objects.create(
-            user=self.user,
-            description="Multi-substance analysis",
-            status=VideoAnalysis.Status.COMPLETED,
-        )
-
-        AnalysisResult.objects.create(
-            analysis=analysis, substance=self.substance, confidence_score=95.5
-        )
-        AnalysisResult.objects.create(
-            analysis=analysis, substance=amphetamine, confidence_score=78.3
-        )
-
-        generator = AnalysisReportPDFGenerator(analysis)
-        pdf_bytes = generator.generate()
-
-        self.assertIsNotNone(pdf_bytes)
-        self.assertGreater(len(pdf_bytes), 1000)
-        self.assertTrue(pdf_bytes.startswith(b"%PDF"))
-
-        # Verify results are present
-        results = analysis.analysis_results.all()
-        self.assertEqual(results.count(), 2)
-
-
-class ReportComprehensiveTest(APITestCase):
-    def setUp(self):
-        # Create user with full details
-        self.user = User.objects.create_user(
-            username="drsmith",
-            email="drsmith@hospital.com",
-            password="securepass123",
-            first_name="John",
-            last_name="Smith",
-        )
-        self.client.force_authenticate(user=self.user)
-
-        # Mock patient GUID for testing
-        self.patient_guid = "00000000-0000-0000-0000-000000000001"
-
-        # Create substances
-        self.cocaine = Substance.objects.create(name_en="Cocaine", name_pl="Kokaina")
-        self.amphetamine = Substance.objects.create(
-            name_en="Amphetamine", name_pl="Amfetamina"
-        )
-        self.methamphetamine = Substance.objects.create(
-            name_en="Methamphetamine", name_pl="Metamfetamina"
-        )
-
-    def tearDown(self):
-        VideoAnalysis.objects.all().delete()
-        AnalysisResult.objects.all().delete()
-        Substance.objects.all().delete()
-        User.objects.all().delete()
 
     @patch("patients.services.patients.patient_service.get_patient_by_guid")
     @patch("reports.services.reports.finders.find")

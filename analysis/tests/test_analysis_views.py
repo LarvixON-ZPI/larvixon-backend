@@ -7,14 +7,14 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from larvixon_site import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
-from .models import Substance, AnalysisResult, User, VideoAnalysis
+from ..models import Substance, AnalysisResult, User, VideoAnalysis
 import uuid
 from unittest.mock import patch
 from django.test import override_settings
 
 
 @override_settings(MOCK_PATIENT_SERVICE=False)
-class VideoAnalysisTest(APITestCase):
+class AnalysisViewsTest(APITestCase):
     def setUp(self):
         # Mock patient service data
         self.mock_patient_data1 = {
@@ -227,6 +227,14 @@ class VideoAnalysisTest(APITestCase):
             ),
             status=VideoAnalysis.Status.FAILED,
         )
+
+    def tearDown(self):
+        # Stop all patchers
+        self.patcher_get_patient.stop()
+        self.patcher_search_patients.stop()
+        self.patcher_get_patients_by_guids.stop()
+
+        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
 
     def test_get_analysis_list(self):
         response = self.client.get(self.analysis_list_url)
@@ -496,11 +504,3 @@ class VideoAnalysisTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
         self.assertEqual(response.data["results"][0]["id"], self.analysis3.id)
-
-    def tearDown(self):
-        # Stop all patchers
-        self.patcher_get_patient.stop()
-        self.patcher_search_patients.stop()
-        self.patcher_get_patients_by_guids.stop()
-
-        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)

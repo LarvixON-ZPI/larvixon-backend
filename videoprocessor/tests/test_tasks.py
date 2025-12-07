@@ -1,6 +1,4 @@
-import os
-import tempfile
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from accounts.models import User
