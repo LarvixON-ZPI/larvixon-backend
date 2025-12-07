@@ -4,12 +4,6 @@ class ReportError(Exception):
     pass
 
 
-class AnalysisNotFoundError(ReportError):
-    """Custom exception raised when a video analysis is not found for a user."""
-
-    pass
-
-
 class AnalysisNotCompletedError(ReportError):
     """Custom exception raised when a video analysis is not completed."""
 

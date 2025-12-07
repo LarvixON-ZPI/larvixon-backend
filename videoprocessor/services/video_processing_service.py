@@ -17,21 +17,10 @@ logger = logging.getLogger(__name__)
 
 
 class VideoProcessingService:
-    """Service for processing video analysis tasks."""
-
     @staticmethod
     def get_sorted_predictions(
         scores: Dict[str, float] | None,
     ) -> List[Tuple[str, float]]:
-        """
-        Get all predictions sorted by confidence score in descending order.
-
-        Args:
-            scores: Dictionary mapping substance names to confidence scores
-
-        Returns:
-            List of tuples (substance_name, score) sorted by score descending
-        """
         if not scores:
             return []
         return sorted(scores.items(), key=lambda item: item[1], reverse=True)
@@ -40,19 +29,21 @@ class VideoProcessingService:
     def save_analysis_results(
         analysis: VideoAnalysis, predictions: Dict[str, float]
     ) -> None:
-        """
-        Save prediction results to the database.
+        if not predictions:
+            logger.info(f"No predictions to save for analysis {analysis.id}")
+            return
 
-        Args:
-            analysis: VideoAnalysis instance to save results for
-            predictions: Dictionary mapping substance names to confidence scores
-
-        Raises:
-            Exception: If there's an error saving results to the database
-        """
         logger.info(
             f"Saving {len(predictions)} prediction results for analysis {analysis.id}"
         )
+
+        try:
+            VideoAnalysis.objects.get(id=analysis.id)
+        except VideoAnalysis.DoesNotExist:
+            logger.error(
+                f"Analysis {analysis.id} was deleted before results could be saved"
+            )
+            raise VideoAnalysisNotFoundError(analysis.id)
 
         for substance_name, score in VideoProcessingService.get_sorted_predictions(
             predictions
@@ -71,18 +62,6 @@ class VideoProcessingService:
 
     @staticmethod
     def get_analysis(analysis_id: int) -> VideoAnalysis:
-        """
-        Retrieve video analysis by ID.
-
-        Args:
-            analysis_id: ID of the video analysis
-
-        Returns:
-            VideoAnalysis instance
-
-        Raises:
-            VideoAnalysisNotFoundError: If analysis with given ID doesn't exist
-        """
         try:
             return VideoAnalysis.objects.get(id=analysis_id)
         except VideoAnalysis.DoesNotExist:
@@ -91,38 +70,17 @@ class VideoProcessingService:
 
     @staticmethod
     def process_video(analysis_id: int) -> None:
-        """
-        Process a video analysis by sending it to the ML model.
-
-        This method:
-        1. Retrieves the analysis record
-        2. Creates a temporary file from the stored video
-        3. Sends it to the ML service for prediction
-        4. Saves the results to the database
-        5. Updates the analysis status
-
-        Args:
-            analysis_id: ID of the video analysis to process
-
-        Raises:
-            VideoAnalysisNotFoundError: If analysis doesn't exist
-            VideoFileAccessError: If there's an error accessing the video file
-            MLPredictionError: If ML prediction fails or returns no results
-        """
         logger.info(f"Starting video processing for analysis ID {analysis_id}")
         video_path = None
 
         try:
-            # Get the analysis record
             analysis = VideoProcessingService.get_analysis(analysis_id)
 
-            # Update status to pending
             analysis.status = VideoAnalysis.Status.PENDING
             analysis.error_message = None
             analysis.save()
             logger.debug(f"Set analysis {analysis_id} status to PENDING")
 
-            # Create temporary file for ML processing
             try:
                 with default_storage.open(analysis.video.name, "rb") as f:
                     with NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_file:
@@ -136,7 +94,6 @@ class VideoProcessingService:
                 )
                 raise VideoFileAccessError(f"Failed to access video file: {str(e)}")
 
-            # Send to ML service for prediction
             logger.info(f"Sending video to ML service for analysis {analysis_id}")
             try:
                 results = ml_service.predict_video(video_path)
@@ -144,15 +101,12 @@ class VideoProcessingService:
                 logger.error(f"ML prediction failed for analysis {analysis_id}: {e}")
                 raise MLPredictionError(f"ML service error: {str(e)}")
 
-            # Validate results
-            if not results:
+            if results is None:
                 logger.warning(f"No predictions returned for analysis {analysis_id}")
                 raise MLPredictionError("No predictions returned from ML endpoint")
 
-            # Save results to database
             VideoProcessingService.save_analysis_results(analysis, results)
 
-            # Update analysis as completed
             analysis.completed_at = timezone.now()
             analysis.status = VideoAnalysis.Status.COMPLETED
             analysis.save()

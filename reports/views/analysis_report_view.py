@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from rest_framework import status
 import logging
 
-from reports.errors import AnalysisNotCompletedError, AnalysisNotFoundError, ReportError
+from analysis.errors import AnalysisNotFoundError
+from reports.errors import AnalysisNotCompletedError, ReportError
 from reports.services.reports import ReportService
 from reports.renderers import PDFRenderer
 

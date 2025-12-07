@@ -15,29 +15,17 @@ logger = logging.getLogger(__name__)
 
 @shared_task
 def process_video_task(analysis_id: int) -> None:
-    """
-    Celery task to process a video analysis.
-
-    This task delegates the actual processing to VideoProcessingService
-    and handles errors by updating the analysis status appropriately.
-
-    Args:
-        analysis_id: ID of the video analysis to process
-    """
     logger.info(f"Celery task started for analysis ID {analysis_id}")
     analysis = None
 
     try:
-        # Delegate to service for processing
         VideoProcessingService.process_video(analysis_id)
 
     except VideoAnalysisNotFoundError as e:
-        # Analysis not found - just log and return
         logger.error(f"Analysis not found: {e}")
         return
 
     except (MLPredictionError, VideoFileAccessError, VideoProcessingError) as e:
-        # Known processing errors - update analysis status
         logger.error(f"Video processing error for analysis {analysis_id}: {e}")
         try:
             analysis = VideoAnalysis.objects.get(id=analysis_id)
@@ -53,7 +41,6 @@ def process_video_task(analysis_id: int) -> None:
             )
 
     except Exception as e:
-        # Unexpected errors - log and update status if possible
         logger.exception(f"Unexpected error processing analysis {analysis_id}: {e}")
         try:
             analysis = VideoAnalysis.objects.get(id=analysis_id)
