@@ -1,88 +1,69 @@
-import os
 import logging
 from celery import shared_task
-from django.utils import timezone
-from analysis.models import Substance, VideoAnalysis
-from django.core.files.storage import default_storage
-from tempfile import NamedTemporaryFile
+from analysis.models import VideoAnalysis
 
-from videoprocessor.services import ml_service
+from videoprocessor.services.video_processing_service import VideoProcessingService
+from videoprocessor.errors import (
+    VideoAnalysisNotFoundError,
+    MLPredictionError,
+    VideoFileAccessError,
+    VideoProcessingError,
+)
 
 logger = logging.getLogger(__name__)
-
-
-def get_sorted_predictions(scores):
-    """
-    Helper function to get all predictions sorted by confidence score.
-    """
-    if not scores:
-        return []
-    sorted_predictions = sorted(scores.items(), key=lambda item: item[1], reverse=True)
-
-    return sorted_predictions
 
 
 @shared_task
 def process_video_task(analysis_id: int) -> None:
     """
-    Send the video to the ML model for processing. Update the database when done.
+    Celery task to process a video analysis.
+
+    This task delegates the actual processing to VideoProcessingService
+    and handles errors by updating the analysis status appropriately.
+
+    Args:
+        analysis_id: ID of the video analysis to process
     """
-    video_path = None
+    logger.info(f"Celery task started for analysis ID {analysis_id}")
+    analysis = None
 
     try:
-        analysis = VideoAnalysis.objects.get(id=analysis_id)
-    except VideoAnalysis.DoesNotExist:
-        logger.error(f"VideoAnalysis with ID {analysis_id} not found.")
+        # Delegate to service for processing
+        VideoProcessingService.process_video(analysis_id)
+
+    except VideoAnalysisNotFoundError as e:
+        # Analysis not found - just log and return
+        logger.error(f"Analysis not found: {e}")
         return
 
-    try:
-        analysis.status = VideoAnalysis.Status.PENDING
-        analysis.error_message = None
-        analysis.save()
-
-        with default_storage.open(analysis.video.name, "rb") as f:
-            with NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_file:
-                tmp_file.write(f.read())
-                tmp_file.flush()
-                video_path = tmp_file.name
-
-                logger.info(
-                    f"Processing video at {video_path} for analysis ID {analysis_id}"
-                )
-                results = ml_service.predict_video(video_path)
-
-        if not results:
+    except (MLPredictionError, VideoFileAccessError, VideoProcessingError) as e:
+        # Known processing errors - update analysis status
+        logger.error(f"Video processing error for analysis {analysis_id}: {e}")
+        try:
+            analysis = VideoAnalysis.objects.get(id=analysis_id)
             analysis.status = VideoAnalysis.Status.FAILED
-            analysis.error_message = (
-                "Model request failed: No predictions returned from ML endpoint"
+            analysis.error_message = f"Processing failed: {str(e)}"
+            analysis.save()
+            logger.info(f"Updated analysis {analysis_id} status to FAILED")
+        except VideoAnalysis.DoesNotExist:
+            logger.error(f"Could not update status - analysis {analysis_id} not found")
+        except Exception as update_error:
+            logger.exception(
+                f"Error updating analysis {analysis_id} status: {update_error}"
             )
-            logger.warning(f"No predictions returned for analysis {analysis_id}")
-        else:
-            for substance_name, score in get_sorted_predictions(results):
-                detected_substance, _ = Substance.objects.get_or_create(
-                    name_en=substance_name
-                )
-                analysis.analysis_results.create(  # type: ignore[attr-defined]
-                    substance=detected_substance, confidence_score=score
-                )
-
-            analysis.completed_at = timezone.now()
-            analysis.status = VideoAnalysis.Status.COMPLETED
-
-        analysis.save()
-        logger.info(f"Processing completed for analysis ID {analysis_id}")
 
     except Exception as e:
-        if "analysis" in locals():
+        # Unexpected errors - log and update status if possible
+        logger.exception(f"Unexpected error processing analysis {analysis_id}: {e}")
+        try:
+            analysis = VideoAnalysis.objects.get(id=analysis_id)
             analysis.status = VideoAnalysis.Status.FAILED
-            analysis.error_message = f"Model request failed: {str(e)}"
+            analysis.error_message = f"Unexpected error: {str(e)}"
             analysis.save()
-        logger.exception(f"An error occurred processing analysis {analysis_id}: {e}")
+            logger.info(f"Updated analysis {analysis_id} status to FAILED")
+        except Exception as update_error:
+            logger.exception(
+                f"Error updating analysis {analysis_id} after unexpected error: {update_error}"
+            )
 
-    finally:
-        if video_path and os.path.exists(video_path):
-            try:
-                os.remove(video_path)
-                logger.debug(f"Cleaned up temp file: {video_path}")
-            except Exception as e:
-                logger.error(f"Error cleaning up temp file {video_path}: {e}")
+    logger.info(f"Celery task completed for analysis ID {analysis_id}")

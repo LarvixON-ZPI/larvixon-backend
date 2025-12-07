@@ -5,7 +5,8 @@ from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from accounts.models import User
 from analysis.models import VideoAnalysis, Substance
-from videoprocessor.tasks import process_video_task, get_sorted_predictions
+from videoprocessor.tasks import process_video_task
+from videoprocessor.services.video_processing_service import VideoProcessingService
 from tests.common import TestFixtures, cleanup_test_media
 
 
@@ -24,7 +25,7 @@ class TestGetSortedPredictions(TestCase):
             "ethanol": 20.0,
         }
 
-        result = get_sorted_predictions(scores)
+        result = VideoProcessingService.get_sorted_predictions(scores)
 
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], ("morphine", 85.0))
@@ -33,12 +34,12 @@ class TestGetSortedPredictions(TestCase):
 
     def test_returns_empty_list_for_none(self):
         """Should return empty list when scores is None."""
-        result = get_sorted_predictions(None)
+        result = VideoProcessingService.get_sorted_predictions(None)
         self.assertEqual(result, [])
 
     def test_returns_empty_list_for_empty_dict(self):
         """Should return empty list when scores is empty."""
-        result = get_sorted_predictions({})
+        result = VideoProcessingService.get_sorted_predictions({})
         self.assertEqual(result, [])
 
 
@@ -81,7 +82,7 @@ class TestProcessVideoTask(TestCase):
         # Analysis should not exist
         self.assertFalse(VideoAnalysis.objects.filter(id=99999).exists())
 
-    @patch("videoprocessor.tasks.ml_service")
+    @patch("videoprocessor.services.video_processing_service.ml_service")
     def test_task_updates_status_to_pending(self, mock_ml_service):
         """Should set status to PENDING when task starts."""
         mock_ml_service.predict_video.return_value = {
@@ -96,7 +97,7 @@ class TestProcessVideoTask(TestCase):
         # Status should eventually be COMPLETED after successful processing
         self.assertEqual(self.analysis.status, VideoAnalysis.Status.COMPLETED)
 
-    @patch("videoprocessor.tasks.ml_service")
+    @patch("videoprocessor.services.video_processing_service.ml_service")
     def test_task_successful_prediction(self, mock_ml_service):
         """Should create analysis results for successful prediction."""
         mock_ml_service.predict_video.return_value = {
@@ -121,7 +122,7 @@ class TestProcessVideoTask(TestCase):
         self.assertEqual(result_list[0].substance.name_en, "cocaine")
         self.assertEqual(result_list[0].confidence_score, 85.5)
 
-    @patch("videoprocessor.tasks.ml_service")
+    @patch("videoprocessor.services.video_processing_service.ml_service")
     def test_task_creates_substances_if_not_exist(self, mock_ml_service):
         """Should create Substance objects if they don't exist."""
         mock_ml_service.predict_video.return_value = {
@@ -135,7 +136,7 @@ class TestProcessVideoTask(TestCase):
         self.assertEqual(Substance.objects.count(), initial_count + 1)
         self.assertTrue(Substance.objects.filter(name_en="new_substance_xyz").exists())
 
-    @patch("videoprocessor.tasks.ml_service")
+    @patch("videoprocessor.services.video_processing_service.ml_service")
     def test_task_failed_prediction_no_results(self, mock_ml_service):
         """Should mark as FAILED when prediction returns None."""
         mock_ml_service.predict_video.return_value = None
@@ -147,7 +148,7 @@ class TestProcessVideoTask(TestCase):
         self.assertIsNotNone(self.analysis.error_message)
         self.assertIn("No predictions returned", self.analysis.error_message)
 
-    @patch("videoprocessor.tasks.ml_service")
+    @patch("videoprocessor.services.video_processing_service.ml_service")
     def test_task_handles_exception(self, mock_ml_service):
         """Should mark as FAILED and log error on exception."""
         mock_ml_service.predict_video.side_effect = Exception("ML service error")
@@ -159,8 +160,8 @@ class TestProcessVideoTask(TestCase):
         self.assertIsNotNone(self.analysis.error_message)
         self.assertIn("ML service error", self.analysis.error_message)
 
-    @patch("videoprocessor.tasks.ml_service")
-    @patch("videoprocessor.tasks.os.remove")
+    @patch("videoprocessor.services.video_processing_service.ml_service")
+    @patch("videoprocessor.services.video_processing_service.os.remove")
     def test_task_cleans_up_temp_file(self, mock_remove, mock_ml_service):
         """Should clean up temporary file after processing."""
         mock_ml_service.predict_video.return_value = {"cocaine": 90.0}
@@ -170,8 +171,8 @@ class TestProcessVideoTask(TestCase):
         # Verify temp file cleanup was called
         mock_remove.assert_called()
 
-    @patch("videoprocessor.tasks.ml_service")
-    @patch("videoprocessor.tasks.os.remove")
+    @patch("videoprocessor.services.video_processing_service.ml_service")
+    @patch("videoprocessor.services.video_processing_service.os.remove")
     def test_task_cleans_up_temp_file_on_error(self, mock_remove, mock_ml_service):
         """Should clean up temp file even when processing fails."""
         mock_ml_service.predict_video.side_effect = Exception("Error")
@@ -181,7 +182,7 @@ class TestProcessVideoTask(TestCase):
         # Verify cleanup was attempted
         mock_remove.assert_called()
 
-    @patch("videoprocessor.tasks.ml_service")
+    @patch("videoprocessor.services.video_processing_service.ml_service")
     def test_task_clears_previous_error_message(self, mock_ml_service):
         """Should clear error_message when reprocessing."""
         mock_ml_service.predict_video.return_value = {"cocaine": 90.0}

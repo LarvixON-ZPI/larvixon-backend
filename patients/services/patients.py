@@ -1,3 +1,4 @@
+from uuid import UUID
 import requests
 from abc import ABC, abstractmethod
 from typing import List
@@ -10,6 +11,7 @@ from larvixon_site.settings import (
     PATIENT_SERVICE_URL,
 )
 from patients.errors import (
+    PatientInvalidUUIDError,
     PatientServiceUnavailableError,
     PatientServiceResponseError,
 )
@@ -41,6 +43,14 @@ class BasePatientService(ABC):
     def get_patients_by_guids(self, guids: List[str]) -> dict[str, dict]:
         """Get multiple patients by their GUIDs."""
         pass
+
+    def validate_uuid(self, guid: str) -> None:
+        """Validate that the provided GUID is a valid UUID."""
+        try:
+            UUID(guid)
+        except ValueError:
+            logger.warning(f"Invalid Patient GUID format provided: {guid}")
+            raise PatientInvalidUUIDError(f"Invalid Patient GUID format: {guid}")
 
 
 class MockPatientService(BasePatientService):

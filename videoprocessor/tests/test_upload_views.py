@@ -1,15 +1,12 @@
-import os
-from unittest.mock import MagicMock, patch
-from django.test import TestCase
+from unittest.mock import patch
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.base import ContentFile
 from django.urls import reverse
-from rest_framework.test import APIRequestFactory, force_authenticate
+from rest_framework.test import APIRequestFactory, force_authenticate, APITestCase
 from rest_framework import status
 from accounts.models import User
 from analysis.models import VideoAnalysis
 from videoprocessor.views.upload import VideoUploadView
-from videoprocessor.services import VideoFileManager
 from tests.common import TestFixtures, cleanup_test_media
 
 
@@ -19,7 +16,7 @@ VIDEO_CONTENT_TYPE = "video/mp4"
 TEST_PASSWORD = "testpass123"
 
 
-class TestVideoUploadView(TestCase):
+class TestVideoUploadView(APITestCase):
     """Test VideoUploadView with dependency injection."""
 
     @classmethod
@@ -67,11 +64,13 @@ class TestVideoUploadView(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("analysis_id", response.data)
 
+    @patch(
+        "videoprocessor.services.video_file_manager.VideoFileManager.extract_and_save_first_frame"
+    )
     @patch("videoprocessor.tasks.process_video_task.delay")
-    def test_upload_with_injected_video_manager(self, mock_task):
+    def test_upload_with_injected_video_manager(self, mock_task, mock_extract):
         """Should accept injected VideoFileManager for testing."""
-        mock_manager = MagicMock(spec=VideoFileManager)
-        mock_manager.extract_and_save_first_frame.return_value = (
+        mock_extract.return_value = (
             "test_thumb.jpg",
             ContentFile(b"fake thumbnail"),
         )
@@ -85,14 +84,10 @@ class TestVideoUploadView(TestCase):
         )
         force_authenticate(request, user=self.user)
 
-        # Inject mock video manager via class attribute
-        VideoUploadView.video_manager = mock_manager
-        try:
-            response = VideoUploadView.as_view()(request)
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-            mock_manager.extract_and_save_first_frame.assert_called_once()
-        finally:
-            VideoUploadView.video_manager = None  # Clean up
+        response = VideoUploadView.as_view()(request)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_extract.assert_called_once()
 
     def test_upload_without_video_file(self):
         """Should return 400 when no video file provided."""
@@ -131,7 +126,9 @@ class TestVideoUploadView(TestCase):
     @patch(
         "videoprocessor.services.video_file_manager.VideoFileManager.extract_and_save_first_frame"
     )
-    @patch("videoprocessor.views.upload.patient_service.get_patient_by_guid")
+    @patch(
+        "videoprocessor.services.video_upload_service.patient_service.get_patient_by_guid"
+    )
     @patch("videoprocessor.tasks.process_video_task.delay")
     def test_upload_with_valid_patient_guid(
         self, mock_task, mock_get_patient, mock_extract
@@ -162,7 +159,9 @@ class TestVideoUploadView(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         mock_get_patient.assert_called_once_with("00000000-0000-0000-0000-000000000001")
 
-    @patch("videoprocessor.views.upload.patient_service.get_patient_by_guid")
+    @patch(
+        "videoprocessor.services.video_upload_service.patient_service.get_patient_by_guid"
+    )
     def test_upload_with_nonexistent_patient(self, mock_get_patient):
         """Should return 404 when patient not found."""
         mock_get_patient.return_value = None
@@ -193,8 +192,6 @@ class TestVideoUploadView(TestCase):
 
         # Create mock file with size exceeding limit
         video_file = self._create_video_file()
-        # Mock the size to be over 3GB
-        video_file.size = 4 * 1024**3
 
         request = self.factory.post(
             reverse("videoprocessor:video-upload"),
@@ -202,6 +199,9 @@ class TestVideoUploadView(TestCase):
             format="multipart",
         )
         force_authenticate(request, user=self.user)
+
+        # Mock the size to be over 3GB after the request is created
+        request.FILES["video"].size = 4 * 1024**3
 
         response = VideoUploadView.as_view()(request)
 

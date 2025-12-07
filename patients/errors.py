@@ -14,3 +14,15 @@ class PatientServiceResponseError(PatientServiceError):
     """Raised when the patient service returns an invalid or unexpected response."""
 
     ...
+
+
+class PatientInvalidUUIDError(PatientServiceError):
+    """Raised when the provided Patient GUID is not a valid UUID."""
+
+    ...
+
+
+class PatientNotFoundError(PatientServiceError):
+    """Raised when a patient with the specified GUID is not found."""
+
+    ...

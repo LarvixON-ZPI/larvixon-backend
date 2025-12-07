@@ -23,16 +23,20 @@ class VideoFileManager:
     def save_video_file(self, video_file):
         try:
             filename = self.fs.save(video_file.name, video_file)
-            video_path = (
-                self.fs.path(filename) if hasattr(self.fs, "path") else filename
-            )
+            try:
+                video_path = (
+                    self.fs.path(filename) if hasattr(self.fs, "path") else filename
+                )
+            except (AttributeError, NotImplementedError):
+                video_path = filename
             return filename, video_path
 
         except Exception as e:
             logger.exception(f"Failed to save video file {video_file.name}: {e}")
             raise IOError(f"Failed to save video file: {e}")
 
-    def extract_and_save_first_frame(self, video_file):
+    @staticmethod
+    def extract_and_save_first_frame(video_file):
         """
         Extracts the first frame from the video path and saves it as a thumbnail
         """
@@ -60,7 +64,14 @@ class VideoFileManager:
             if not is_success:
                 raise IOError("Failed to encode frame to JPEG.")
 
-            content_file = ContentFile(buffer.tobytes())
+            # Handle both numpy array (real cv2) and bytes (mocked tests)
+            if hasattr(buffer, "tobytes"):
+                buffer_bytes = buffer.tobytes()
+            else:
+                buffer_bytes = (
+                    bytes(buffer) if not isinstance(buffer, bytes) else buffer
+                )
+            content_file = ContentFile(buffer_bytes)
             base_name, _ = os.path.splitext(video_file.name)
             thumbnail_name = base_name + THUMBNAIL_FILENAME_SUFFIX
 

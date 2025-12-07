@@ -1,31 +1,25 @@
-import os
 import logging
-from uuid import UUID
-from rest_framework import serializers
+
 from rest_framework import status, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
-from patients.services.patients import patient_service
+
 from patients.errors import (
+    PatientInvalidUUIDError,
+    PatientNotFoundError,
     PatientServiceUnavailableError,
     PatientServiceResponseError,
 )
-from videoprocessor.views.base_video_upload_mixin import BaseVideoUploadMixin
+from videoprocessor.serializers import VideoUploadSerializer
+from videoprocessor.services import VideoUploadService
+from videoprocessor.errors import VideoForUploadTooLargeError, VideoWrongFormatError
 
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class VideoUploadSerializer(serializers.Serializer):
-    """
-    empty serializer for video upload view to supress warnings
-    """
-
-    pass
-
-
-class VideoUploadView(BaseVideoUploadMixin, APIView):
+class VideoUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = VideoUploadSerializer
@@ -57,54 +51,64 @@ class VideoUploadView(BaseVideoUploadMixin, APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if patient_guid:
-            try:
-                UUID(patient_guid)
-            except ValueError:
-                logger.warning(f"Invalid Patient GUID format provided: {patient_guid}")
-                return Response(
-                    {"error": "Invalid Patient GUID format."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        try:
+            analysis = VideoUploadService.upload_video(
+                video_file=video_file,
+                description=description,
+                patient_guid=patient_guid,
+                user=request.user,
+            )
 
-            try:
-                patient = patient_service.get_patient_by_guid(patient_guid)
-                if not patient:
-                    return Response(
-                        {"error": f"Patient with GUID {patient_guid} not found."},
-                        status=status.HTTP_404_NOT_FOUND,
-                    )
-            except PatientServiceUnavailableError as e:
-                logger.error(
-                    f"Patient service unavailable for GUID {patient_guid}: {e}"
-                )
-                return Response(
-                    {
-                        "error": "Patient service is currently unavailable. Please try again later."
-                    },
-                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
-                )
-            except PatientServiceResponseError as e:
-                logger.error(
-                    f"Patient service response error for GUID {patient_guid}: {e}"
-                )
-                return Response(
-                    {"error": f"Error processing patient data: {str(e)}"},
-                    status=status.HTTP_502_BAD_GATEWAY,
-                )
-
-        error = self.validate_file_size(video_file.size)
-        if error:
-            logger.warning(f"File size validation failed: {error.data}")
-            return error
-
-        ext = os.path.splitext(video_file.name)[1].lower()
-        if ext != ".mp4":
             return Response(
                 {
-                    "error": f"Unsupported file format: {ext}. For now only .mp4 files are allowed."
+                    "message": "Video processed and analysis started.",
+                    "analysis_id": analysis.id,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        except PatientInvalidUUIDError:
+            logger.warning(f"Invalid Patient GUID format provided: {patient_guid}")
+            return Response(
+                {"error": "Invalid Patient GUID format."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except PatientNotFoundError:
+            logger.warning(f"Patient with GUID {patient_guid} not found.")
+            return Response(
+                {"error": f"Patient with GUID {patient_guid} not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except PatientServiceUnavailableError as e:
+            logger.error(f"Patient service unavailable for GUID {patient_guid}: {e}")
+            return Response(
+                {
+                    "error": "Patient service is currently unavailable. Please try again later."
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except PatientServiceResponseError as e:
+            logger.error(f"Patient service response error for GUID {patient_guid}: {e}")
+            return Response(
+                {"error": f"Error processing patient data: {str(e)}"},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        except VideoForUploadTooLargeError as e:
+            logger.warning(f"File size validation failed: {e}")
+            return Response(
+                {
+                    "error": f"Video file is too large ({e.file_size} GB). Maximum allowed size is {e.max_size} GB."
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        return self.save_video_file(request, video_file, description, patient_guid)
+        except VideoWrongFormatError as e:
+            logger.warning(f"File format validation failed: {e}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error during video upload: {e}")
+            return Response(
+                {"error": "An unexpected error occurred. Please try again later."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
