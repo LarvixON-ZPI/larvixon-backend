@@ -1,17 +1,13 @@
 from enum import Enum
 import logging
-from allauth.mfa.models import Authenticator
-import pyotp
-
-from qrcode.image.pil import PilImage
-from qrcode.image.pure import PyPNGImage
-
-from allauth.mfa.utils import is_mfa_enabled
-
 import pyotp
 import qrcode
 from io import BytesIO
 import base64
+from qrcode.image.pil import PilImage
+from qrcode.image.pure import PyPNGImage
+from allauth.mfa.models import Authenticator
+from allauth.mfa.utils import is_mfa_enabled
 
 from accounts.errors import (
     MFAAlreadyEnabledError,

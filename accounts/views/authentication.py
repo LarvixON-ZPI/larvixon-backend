@@ -111,7 +111,7 @@ class UserLogoutView(APIView):
 class SocialLoginJWTViewMixin:
     def post(self, request, *args, **kwargs):
         # Authenticate the user with the social provider (Google, Facebook, etc.)
-        response = super().post(request, *args, **kwargs)
+        super().post(request, *args, **kwargs)
         user = request.user
 
         if not user.is_authenticated:

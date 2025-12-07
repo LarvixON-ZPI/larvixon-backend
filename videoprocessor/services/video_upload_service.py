@@ -23,9 +23,6 @@ ALLOWED_EXTENSIONS: list[str] = [".mp4"]
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-UPLOAD_DIR: str = os.path.join(settings.MEDIA_ROOT, "temp_uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
 
 class VideoUploadService:
     @staticmethod
@@ -114,27 +111,3 @@ class VideoUploadService:
         process_video_task.delay(analysis.id)
 
         return analysis
-
-    @staticmethod
-    def _finalize_upload(user, file_path, filename, description, patient_guid) -> None:
-        try:
-            VideoUploadService.validate_file_format(filename)
-        except VideoWrongFormatError as e:
-            logger.warning(f"File format validation failed: {e}")
-            os.remove(file_path)
-            raise
-        try:
-            with open(file_path, "rb") as f:
-                django_file: File[bytes] = File(f, name=filename)
-                analysis: VideoAnalysis = VideoUploadService.save_and_process_video(
-                    user=user,
-                    video_file=django_file,
-                    description=description,
-                    patient_guid=patient_guid,
-                )
-            os.remove(file_path)
-        except Exception as e:
-            logger.exception(f"Error saving video: {e}")
-            if os.path.exists(file_path):
-                os.remove(file_path)
-            raise

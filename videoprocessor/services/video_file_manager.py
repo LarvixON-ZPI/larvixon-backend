@@ -12,35 +12,11 @@ THUMBNAIL_FILENAME_SUFFIX = "_thumb.jpg"
 
 
 class VideoFileManager:
-    """
-    Manages the saving of video files and extraction of thumbnails.
-    Uses Django's storage backend (injectable for testing).
-    """
-
-    def __init__(self, storage: Storage | None = None):
-        self.fs = storage or default_storage
-
-    def save_video_file(self, video_file):
-        try:
-            filename = self.fs.save(video_file.name, video_file)
-            try:
-                video_path = (
-                    self.fs.path(filename) if hasattr(self.fs, "path") else filename
-                )
-            except (AttributeError, NotImplementedError):
-                video_path = filename
-            return filename, video_path
-
-        except Exception as e:
-            logger.exception(f"Failed to save video file {video_file.name}: {e}")
-            raise IOError(f"Failed to save video file: {e}")
+    def __init__(self, storage: Storage | None = None) -> None:
+        self.fs: Storage = storage or default_storage
 
     @staticmethod
     def extract_and_save_first_frame(video_file):
-        """
-        Extracts the first frame from the video path and saves it as a thumbnail
-        """
-
         temp_path = None
         try:
             suffix = os.path.splitext(video_file.name)[1]

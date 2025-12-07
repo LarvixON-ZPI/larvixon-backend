@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 import logging
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -9,10 +8,6 @@ from phonenumber_field.modelfields import PhoneNumberField
 from accounts.utils import user_picture_upload_to
 
 logger = logging.getLogger(__name__)
-
-if TYPE_CHECKING:
-    from datetime import datetime
-    from typing import Any, Dict, List, Tuple
 
 
 class User(AbstractUser):

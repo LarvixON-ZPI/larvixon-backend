@@ -88,7 +88,6 @@ class TestProcessVideoTask(TestCase):
             "morphine": 10.0,
         }
 
-        initial_status = self.analysis.status
         process_video_task(self.analysis.id)
 
         self.analysis.refresh_from_db()

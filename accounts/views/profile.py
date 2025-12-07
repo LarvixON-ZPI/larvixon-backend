@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework.request import Request
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
@@ -5,10 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.exceptions import ValidationError
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-import logging
 
 from accounts.models import User, UserProfile
-
 from ..serializers import (
     UserSerializer,
     UserProfileSerializer,
@@ -16,7 +16,6 @@ from ..serializers import (
     UserStatsSerializer,
 )
 from ..services.profile import ProfileService
-from ..services.authentication import AuthenticationService
 
 logger: logging.Logger = logging.getLogger(__name__)
 
