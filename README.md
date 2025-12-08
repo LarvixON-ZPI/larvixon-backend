@@ -198,6 +198,13 @@ Run the comprehensive Django test suite:
 python manage.py test
 ```
 
+### Coverage
+
+```bash
+coverage run manage.py test
+coverage html && python -m webbrowser -t "file://$PWD/htmlcov/index.html"
+```
+
 ### CI/CD pipelines
 
 Recommended to install [nektos/act](https://github.com/nektos/act) and Docker Desktop.

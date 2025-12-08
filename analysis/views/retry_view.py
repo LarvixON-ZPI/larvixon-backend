@@ -1,54 +1,22 @@
+import logging
+
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
-from django.utils import timezone
-from datetime import timedelta
-from typing import Optional
-from analysis.models import VideoAnalysis
-from analysis.serializers import RetryResponseSerializer
-from larvixon_site.settings import VIDEO_LIFETIME_DAYS
-from videoprocessor.tasks import process_video_task
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
+from larvixon_site.settings import VIDEO_LIFETIME_DAYS
+from accounts.models import User
+from analysis.serializers import RetryResponseSerializer
+from analysis.services.analysis import AnalysisService
+from analysis.errors import (
+    AnalysisNotFoundError,
+    AnalysisCannotBeRetriedError,
+)
 
-def validate_analysis_status(analysis: VideoAnalysis) -> Optional[Response]:
-    if analysis.status != VideoAnalysis.Status.FAILED:
-        return Response(
-            {"error": "Only failed analyses can be retried."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    return None
-
-
-def validate_analysis_age(analysis: VideoAnalysis) -> Optional[Response]:
-    cutoff_date = timezone.now() - timedelta(days=int(VIDEO_LIFETIME_DAYS))
-    if analysis.created_at < cutoff_date:
-        return Response(
-            {
-                "error": f"Analysis is too old to retry. Only analyses created within the last {VIDEO_LIFETIME_DAYS} days can be retried."
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    return None
-
-
-def validate_video_exists(analysis: VideoAnalysis) -> Optional[Response]:
-    if not analysis.video:
-        return Response(
-            {"error": "Video file no longer exists. Cannot retry this analysis."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    return None
-
-
-def reset_analysis_for_retry(analysis: VideoAnalysis) -> None:
-    analysis.analysis_results.all().delete()
-    analysis.status = VideoAnalysis.Status.PENDING
-    analysis.error_message = None
-    analysis.completed_at = None
-    analysis.save()
+logger = logging.getLogger(__name__)
 
 
 class VideoAnalysisRetryView(APIView):
@@ -81,33 +49,30 @@ class VideoAnalysisRetryView(APIView):
         Retry a failed analysis by ID.
         """
         try:
-            analysis = VideoAnalysis.objects.get(id=pk, user=request.user)  # type: ignore[misc]
-        except VideoAnalysis.DoesNotExist:
+            user = request.user
+            if not isinstance(user, User):
+                raise ValueError("Invalid user in request")
+            analysis = AnalysisService.retry_analysis(pk, user)
+
+            return Response(
+                {
+                    "message": "Analysis retry initiated successfully.",
+                    "analysis_id": analysis.id,
+                },
+                status=status.HTTP_200_OK,
+            )
+        except AnalysisNotFoundError:
+            logger.warning(
+                f"Analysis {pk} not found for user {request.user.pk} during retry attempt"
+            )
             return Response(
                 {
                     "error": "Analysis not found or you do not have permission to access it."
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )
-
-        validations = [
-            validate_analysis_status,
-            validate_analysis_age,
-            validate_video_exists,
-        ]
-
-        for validation in validations:
-            error_response = validation(analysis)
-            if error_response:
-                return error_response
-
-        reset_analysis_for_retry(analysis)
-        process_video_task.delay(analysis.id)
-
-        return Response(
-            {
-                "message": "Analysis retry initiated successfully.",
-                "analysis_id": analysis.id,
-            },
-            status=status.HTTP_200_OK,
-        )
+        except AnalysisCannotBeRetriedError as e:
+            return Response(
+                {"error": e.message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )

@@ -2,12 +2,12 @@ from typing import Any
 from rest_framework import generics, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from analysis.models import VideoAnalysis
+from analysis.services.analysis import AnalysisService
 from ..serializers import VideoAnalysisSerializer
 from ..filters import VideoAnalysisFilter
-from patients.services import patient_service
 import logging
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class VideoAnalysisListView(generics.ListCreateAPIView):
@@ -29,24 +29,8 @@ class VideoAnalysisListView(generics.ListCreateAPIView):
         context = super().get_serializer_context()
 
         queryset = self.filter_queryset(self.get_queryset())
-        patient_guids = [
-            str(analysis.patient_guid) for analysis in queryset if analysis.patient_guid
-        ]
-
-        if not patient_guids:
-            context["patient_details_map"] = {}
-            return context
-
-        try:
-            context["patient_details_map"] = patient_service.get_patients_by_guids(
-                patient_guids
-            )
-        except Exception:
-            logger.error(
-                "Failed to fetch patient details for VideoAnalysisListView",
-                exc_info=True,
-            )
-            context["patient_details_map"] = {}
+        patient_details_map = AnalysisService.get_patients_details_map(list(queryset))
+        context["patient_details_map"] = patient_details_map
 
         return context
 

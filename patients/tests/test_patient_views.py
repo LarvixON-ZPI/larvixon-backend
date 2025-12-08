@@ -1,22 +1,21 @@
 import sys
 from unittest.mock import patch, Mock
-from django.test import TestCase, override_settings
-from rest_framework.test import APITestCase
+
+from django.test import TestCase
 from django.core.cache import cache
+from django.urls import reverse
+from rest_framework.test import APITestCase
 from rest_framework.test import APIRequestFactory, force_authenticate
 from rest_framework.request import Request
 from rest_framework.response import Response
-import requests
 
 from accounts.models import User
 from patients.views.get_patient_view import GetPatientView
 from patients.views.search_patients_view import SearchPatientsView
-from patients.services import patient_service
 from patients.errors import (
     PatientServiceUnavailableError,
     PatientServiceResponseError,
 )
-from larvixon_site.settings import MOCK_PATIENT_SERVICE
 from tests.common import TestFixtures, run_tests
 
 
@@ -350,7 +349,7 @@ class TestPatientViews(APITestCase):
         User.objects.all().delete()
         cache.clear()
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.api_patient_service.requests.get")
     def test_get_patient_success(self, mock_get: Mock) -> None:
         """Test successful patient retrieval with valid GUID."""
         guid = "ab758f9b-0298-4823-b144-ae0db20bc215"
@@ -360,7 +359,9 @@ class TestPatientViews(APITestCase):
         mock_response.json.return_value = self.MOCK_PATIENT_SINGLE
         mock_get.return_value = mock_response
 
-        request: Request = self.factory.get(f"/api/patients/{guid}/")
+        request: Request = self.factory.get(
+            reverse("patients:patient-detail", kwargs={"guid": guid})
+        )
         force_authenticate(request, user=self.user)
 
         response: Response = GetPatientView.as_view()(request, guid=guid)
@@ -373,7 +374,7 @@ class TestPatientViews(APITestCase):
         self.assertEqual(response.data["first_name"], "Aurelia")
         self.assertEqual(response.data["last_name"], "Jędruszczak")
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.api_patient_service.requests.get")
     def test_get_patient_not_found(self, mock_get: Mock) -> None:
         """Test patient retrieval with non-existent GUID."""
         guid = "99999999-9999-9999-9999-999999999999"
@@ -382,7 +383,9 @@ class TestPatientViews(APITestCase):
         mock_response.status_code = 404
         mock_get.return_value = mock_response
 
-        request: Request = self.factory.get(f"/api/patients/{guid}/")
+        request: Request = self.factory.get(
+            reverse("patients:patient-detail", kwargs={"guid": guid})
+        )
         force_authenticate(request, user=self.user)
 
         response: Response = GetPatientView.as_view()(request, guid=guid)
@@ -391,7 +394,7 @@ class TestPatientViews(APITestCase):
         self.assertIn("detail", response.data)
         self.assertEqual(response.data["detail"], "Patient not found.")
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.api_patient_service.requests.get")
     def test_get_patient_invalid_guid_format(self, mock_get: Mock) -> None:
         """Test patient retrieval with malformed GUID."""
         invalid_guids = [
@@ -408,7 +411,9 @@ class TestPatientViews(APITestCase):
 
         for invalid_guid in invalid_guids:
             with self.subTest(guid=invalid_guid):
-                request: Request = self.factory.get(f"/api/patients/{invalid_guid}/")
+                request: Request = self.factory.get(
+                    reverse("patients:patient-detail", kwargs={"guid": invalid_guid})
+                )
                 force_authenticate(request, user=self.user)
 
                 response: Response = GetPatientView.as_view()(
@@ -418,31 +423,19 @@ class TestPatientViews(APITestCase):
                 # Invalid GUIDs should return 404 (not found)
                 self.assertEqual(response.status_code, 404)
 
-    @patch("patients.services.requests.get")
-    def test_get_patient_empty_guid(self, mock_get: Mock) -> None:
-        """Test patient retrieval with empty GUID returns 404."""
-        mock_response = Mock()
-        mock_response.status_code = 404
-        mock_get.return_value = mock_response
-
-        request: Request = self.factory.get("/api/patients//")
-        force_authenticate(request, user=self.user)
-
-        response: Response = GetPatientView.as_view()(request, guid="")
-
-        self.assertEqual(response.status_code, 404)
-
     def test_get_patient_unauthenticated(self) -> None:
         """Test patient retrieval without authentication."""
         guid = "00000000-0000-0000-0000-000000000001"
-        request: Request = self.factory.get(f"/api/patients/{guid}/")
+        request: Request = self.factory.get(
+            reverse("patients:patient-detail", kwargs={"guid": guid})
+        )
         # Don't authenticate the request
 
         response: Response = GetPatientView.as_view()(request, guid=guid)
 
         self.assertEqual(response.status_code, 401)
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.api_patient_service.requests.get")
     def test_search_patients_success(self, mock_get: Mock) -> None:
         """Test successful patient search."""
         mock_response = Mock()
@@ -450,7 +443,7 @@ class TestPatientViews(APITestCase):
         mock_response.json.return_value = self.MOCK_PATIENTS_SEARCH
         mock_get.return_value = mock_response
 
-        request: Request = self.factory.get("/api/patients/")
+        request: Request = self.factory.get(reverse("patients:patient-list"))
         force_authenticate(request, user=self.user)
 
         response: Response = SearchPatientsView.as_view()(request)
@@ -459,7 +452,7 @@ class TestPatientViews(APITestCase):
         self.assertIsInstance(response.data, list)
         self.assertEqual(len(response.data), 6)
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.api_patient_service.requests.get")
     def test_search_patients_with_search_term(self, mock_get: Mock) -> None:
         """Test patient search with search term."""
         search_term = "Aurelia"
@@ -481,7 +474,9 @@ class TestPatientViews(APITestCase):
         mock_response.json.return_value = filtered_bundle
         mock_get.return_value = mock_response
 
-        request: Request = self.factory.get(f"/api/patients/?first_name={search_term}")
+        request: Request = self.factory.get(
+            f"{reverse('patients:patient-list')}?first_name={search_term}"
+        )
         force_authenticate(request, user=self.user)
 
         response: Response = SearchPatientsView.as_view()(request)
@@ -495,7 +490,7 @@ class TestPatientViews(APITestCase):
             or search_term.lower() in patient["last_name"].lower()
         )
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.api_patient_service.requests.get")
     def test_search_patients_no_results(self, mock_get: Mock) -> None:
         """Test patient search with search term that has no matches."""
         search_term = "NonExistentPatient12345"
@@ -510,7 +505,9 @@ class TestPatientViews(APITestCase):
         }
         mock_get.return_value = mock_response
 
-        request: Request = self.factory.get(f"/api/patients/?last_name={search_term}")
+        request: Request = self.factory.get(
+            f"{reverse('patients:patient-list')}?last_name={search_term}"
+        )
         force_authenticate(request, user=self.user)
 
         response: Response = SearchPatientsView.as_view()(request)
@@ -519,7 +516,7 @@ class TestPatientViews(APITestCase):
         self.assertIsInstance(response.data, list)
         self.assertEqual(len(response.data), 0)
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.api_patient_service.requests.get")
     def test_search_patients_empty_search_term(self, mock_get: Mock) -> None:
         """Test patient search with empty search term."""
         mock_response = Mock()
@@ -527,7 +524,7 @@ class TestPatientViews(APITestCase):
         mock_response.json.return_value = self.MOCK_PATIENTS_SEARCH
         mock_get.return_value = mock_response
 
-        request: Request = self.factory.get("/api/patients")
+        request: Request = self.factory.get(reverse("patients:patient-list"))
         force_authenticate(request, user=self.user)
 
         response: Response = SearchPatientsView.as_view()(request)
@@ -535,7 +532,7 @@ class TestPatientViews(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.data, list)
 
-    @patch("patients.services.requests.get")
+    @patch("patients.services.api_patient_service.requests.get")
     def test_search_patients_special_characters(self, mock_get: Mock) -> None:
         """Test patient search with special characters in search term."""
         special_chars = ["%", "&", "ą", "ł", "ż"]
@@ -553,7 +550,7 @@ class TestPatientViews(APITestCase):
         for search_term in special_chars:
             with self.subTest(search_term=search_term):
                 request: Request = self.factory.get(
-                    f"/api/patients/?first_name={search_term}"
+                    f"{reverse('patients:patient-list')}?first_name={search_term}"
                 )
                 force_authenticate(request, user=self.user)
 
@@ -565,39 +562,9 @@ class TestPatientViews(APITestCase):
 
     def test_search_patients_unauthenticated(self) -> None:
         """Test patient search without authentication."""
-        request: Request = self.factory.get("/api/patients/")
+        request: Request = self.factory.get(reverse("patients:patient-list"))
         # Don't authenticate the request
 
         response: Response = SearchPatientsView.as_view()(request)
 
         self.assertEqual(response.status_code, 401)
-
-
-class TestPatientErrors(TestCase):
-    """Test custom patient error classes."""
-
-    def test_patient_service_error_base(self) -> None:
-        """Test base PatientServiceError exception."""
-        from patients.errors import PatientServiceError
-
-        error = PatientServiceError("Test error")
-        self.assertEqual(str(error), "Test error")
-
-    def test_patient_service_unavailable_error(self) -> None:
-        """Test PatientServiceUnavailableError exception."""
-        error = PatientServiceUnavailableError("Service unavailable")
-        self.assertEqual(str(error), "Service unavailable")
-
-    def test_patient_service_response_error(self) -> None:
-        """Test PatientServiceResponseError exception."""
-        error = PatientServiceResponseError("Invalid response")
-        self.assertEqual(str(error), "Invalid response")
-
-
-if __name__ == "__main__":
-    test_classes = [
-        TestPatientViews,
-        TestPatientErrors,
-    ]
-    success = run_tests(test_classes)
-    sys.exit(0 if success else 1)

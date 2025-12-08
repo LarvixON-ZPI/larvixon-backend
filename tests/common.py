@@ -1,6 +1,5 @@
 import unittest
 import uuid
-import sys
 from pathlib import Path
 import shutil
 

@@ -1,10 +1,7 @@
 import os
+import logging
 from io import BytesIO
-from django.http import HttpResponse
-from django.utils import timezone
-from django.contrib.staticfiles import finders
 from reportlab.lib.pagesizes import A4
-from patients.services import patient_service
 from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.platypus import (
@@ -19,6 +16,49 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase.pdfmetrics import registerFontFamily
+
+from django.utils import timezone
+from django.contrib.staticfiles import finders
+
+from analysis.errors import AnalysisNotFoundError
+from analysis.models import VideoAnalysis
+from analysis.services.analysis import AnalysisService
+from patients.services import patient_service
+from reports.errors import AnalysisNotCompletedError, ReportError
+
+
+logger: logging.Logger = logging.getLogger(__name__)
+
+
+class ReportService:
+    @staticmethod
+    def generate_report(pk, user) -> bytes:
+        analysis: VideoAnalysis
+        try:
+            analysis = AnalysisService.get_user_analysis(pk, user)
+        except AnalysisNotFoundError:
+            logger.error(f"Analysis with ID {pk} not found for user {user.id}")
+            raise AnalysisNotFoundError(f"Analysis with ID {pk} not found")
+
+        if not ReportService._is_analysis_completed(analysis):
+            raise AnalysisNotCompletedError()
+
+        try:
+            pdf_bytes: bytes = ReportService._generate_pdf_report(analysis)
+            return pdf_bytes
+        except Exception as e:
+            logger.error(f"Failed to generate report for analysis {pk}: {str(e)}")
+            raise ReportError("PDF generation failed") from e
+
+    @staticmethod
+    def _is_analysis_completed(analysis: VideoAnalysis) -> bool:
+        return analysis.status == VideoAnalysis.Status.COMPLETED
+
+    @staticmethod
+    def _generate_pdf_report(analysis: VideoAnalysis) -> bytes:
+        logger.info(f"Generating PDF report for analysis {analysis.id}")
+        generator: AnalysisReportPDFGenerator = AnalysisReportPDFGenerator(analysis)
+        return generator.generate()
 
 
 class AnalysisReportPDFGenerator:
@@ -53,7 +93,7 @@ class AnalysisReportPDFGenerator:
         font_bold_path = finders.find("fonts/DejaVuSans-Bold.ttf")
 
         if not font_regular_path or not font_bold_path:
-            print("Warning: Font files not found! Using Helvetica.")
+            logger.warning("Font files not found! Using Helvetica.")
             return
 
         pdfmetrics.registerFont(TTFont("DejaVuSans", font_regular_path))
@@ -235,11 +275,3 @@ class AnalysisReportPDFGenerator:
         pdf = self.buffer.getvalue()
         self.buffer.close()
         return pdf
-
-    @staticmethod
-    def create_http_response(pdf_bytes, analysis_id):
-        response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = (
-            f'attachment; filename="analysis_{analysis_id}_report.pdf"'
-        )
-        return response

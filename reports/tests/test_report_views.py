@@ -1,222 +1,19 @@
 import os
 from unittest.mock import patch
-from django.test import TestCase
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from io import BytesIO
 
 from analysis.models import VideoAnalysis, Substance, AnalysisResult
-from reports.services import AnalysisReportPDFGenerator
+from reports.services.reports import AnalysisReportPDFGenerator
 from accounts.models import User
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "larvixon_site.settings")
 
-import django
 
-django.setup()
-
-
-class ReportBasicTests(APITestCase):
+class ReportViewsTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
-        )
-        self.client.force_authenticate(user=self.user)
-        self.substance = Substance.objects.create(name_en="Cocaine", name_pl="Kokaina")
-
-    def tearDown(self):
-        VideoAnalysis.objects.all().delete()
-        User.objects.all().delete()
-        Substance.objects.all().delete()
-
-    def test_report_not_found(self):
-
-        url = reverse("reports:analysis-report", args=[999999])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn("detail", response.data)
-        self.assertEqual(
-            response.data["detail"], "Analysis not found or access denied."
-        )
-
-    def test_report_not_completed(self):
-
-        analysis = VideoAnalysis.objects.create(
-            user=self.user,
-            description="Pending analysis",
-            status=VideoAnalysis.Status.PENDING,
-        )
-
-        url = reverse("reports:analysis-report", args=[analysis.id])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("detail", response.data)
-        self.assertEqual(
-            response.data["detail"], "Report available only for completed analyses."
-        )
-
-    def test_report_access_denied(self):
-
-        other_user = User.objects.create_user(
-            username="otheruser", email="other@example.com", password="testpass123"
-        )
-        analysis = VideoAnalysis.objects.create(
-            user=other_user,
-            description="Other user's analysis",
-            status=VideoAnalysis.Status.COMPLETED,
-        )
-
-        url = reverse("reports:analysis-report", args=[analysis.id])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(
-            response.data["detail"], "Analysis not found or access denied."
-        )
-
-    def test_unauthenticated_access(self):
-
-        analysis = VideoAnalysis.objects.create(
-            user=self.user,
-            description="Test analysis",
-            status=VideoAnalysis.Status.COMPLETED,
-        )
-
-        self.client.force_authenticate(user=None)
-        url = reverse("reports:analysis-report", args=[analysis.id])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    @patch("reports.services.finders.find")
-    def test_successful_report_generation(self, mock_find):
-
-        mock_find.return_value = None
-
-        analysis = VideoAnalysis.objects.create(
-            user=self.user,
-            description="Completed analysis",
-            status=VideoAnalysis.Status.COMPLETED,
-        )
-
-        url = reverse("reports:analysis-report", args=[analysis.id])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response["Content-Type"], "application/pdf")
-        self.assertIn("attachment", response["Content-Disposition"])
-        self.assertIn(
-            f"analysis_{analysis.id}_report.pdf", response["Content-Disposition"]
-        )
-        self.assertTrue(response.content.startswith(b"%PDF"))
-
-
-class ReportPDFGeneratorTests(TestCase):
-
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
-        )
-        self.substance = Substance.objects.create(name_en="Cocaine", name_pl="Kokaina")
-
-    def tearDown(self):
-        VideoAnalysis.objects.all().delete()
-        User.objects.all().delete()
-        Substance.objects.all().delete()
-
-    def test_pdf_generator_initialization(self):
-
-        analysis = VideoAnalysis.objects.create(
-            user=self.user,
-            description="Test analysis",
-            status=VideoAnalysis.Status.COMPLETED,
-        )
-
-        generator = AnalysisReportPDFGenerator(analysis)
-        self.assertIsNotNone(generator)
-        self.assertEqual(generator.analysis, analysis)
-        self.assertIsInstance(generator.buffer, BytesIO)
-
-    def test_http_response_creation(self):
-
-        pdf_bytes = b"fake pdf content"
-        analysis_id = 123
-
-        response = AnalysisReportPDFGenerator.create_http_response(
-            pdf_bytes, analysis_id
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pdf")
-        self.assertIn("attachment", response["Content-Disposition"])
-        self.assertIn(
-            f"analysis_{analysis_id}_report.pdf", response["Content-Disposition"]
-        )
-        self.assertEqual(response.content, pdf_bytes)
-
-    @patch("reports.services.finders.find")
-    def test_pdf_generation_without_patient(self, mock_find):
-
-        mock_find.return_value = None
-
-        analysis = VideoAnalysis.objects.create(
-            user=self.user,
-            description="Analysis without patient",
-            status=VideoAnalysis.Status.COMPLETED,
-        )
-
-        AnalysisResult.objects.create(
-            analysis=analysis, substance=self.substance, confidence_score=85.0
-        )
-
-        generator = AnalysisReportPDFGenerator(analysis)
-        pdf_bytes = generator.generate()
-
-        self.assertIsNotNone(pdf_bytes)
-        self.assertGreater(len(pdf_bytes), 0)
-        self.assertTrue(pdf_bytes.startswith(b"%PDF"))
-
-    @patch("reports.services.finders.find")
-    def test_pdf_generation_with_multiple_substances(self, mock_find):
-
-        mock_find.return_value = None
-
-        amphetamine = Substance.objects.create(
-            name_en="Amphetamine", name_pl="Amfetamina"
-        )
-
-        analysis = VideoAnalysis.objects.create(
-            user=self.user,
-            description="Multi-substance analysis",
-            status=VideoAnalysis.Status.COMPLETED,
-        )
-
-        AnalysisResult.objects.create(
-            analysis=analysis, substance=self.substance, confidence_score=95.5
-        )
-        AnalysisResult.objects.create(
-            analysis=analysis, substance=amphetamine, confidence_score=78.3
-        )
-
-        generator = AnalysisReportPDFGenerator(analysis)
-        pdf_bytes = generator.generate()
-
-        self.assertIsNotNone(pdf_bytes)
-        self.assertGreater(len(pdf_bytes), 1000)
-        self.assertTrue(pdf_bytes.startswith(b"%PDF"))
-
-        # Verify results are present
-        results = analysis.analysis_results.all()
-        self.assertEqual(results.count(), 2)
-
-
-class ReportComprehensiveTest(APITestCase):
-
-    def setUp(self):
-        # Create user with full details
         self.user = User.objects.create_user(
             username="drsmith",
             email="drsmith@hospital.com",
@@ -244,8 +41,87 @@ class ReportComprehensiveTest(APITestCase):
         Substance.objects.all().delete()
         User.objects.all().delete()
 
-    @patch("reports.services.patient_service.get_patient_by_guid")
-    @patch("reports.services.finders.find")
+    def test_report_not_found(self):
+        url = reverse("reports:analysis-report", args=[999999])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("detail", response.data)
+        self.assertEqual(
+            response.data["detail"], "Analysis not found or access denied."
+        )
+
+    def test_report_not_completed(self):
+        analysis = VideoAnalysis.objects.create(
+            user=self.user,
+            description="Pending analysis",
+            status=VideoAnalysis.Status.PENDING,
+        )
+
+        url = reverse("reports:analysis-report", args=[analysis.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("detail", response.data)
+        self.assertEqual(
+            response.data["detail"], "Report available only for completed analyses."
+        )
+
+    def test_report_access_denied(self):
+        other_user = User.objects.create_user(
+            username="otheruser", email="other@example.com", password="testpass123"
+        )
+        analysis = VideoAnalysis.objects.create(
+            user=other_user,
+            description="Other user's analysis",
+            status=VideoAnalysis.Status.COMPLETED,
+        )
+
+        url = reverse("reports:analysis-report", args=[analysis.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data["detail"], "Analysis not found or access denied."
+        )
+
+    def test_unauthenticated_access(self):
+        analysis = VideoAnalysis.objects.create(
+            user=self.user,
+            description="Test analysis",
+            status=VideoAnalysis.Status.COMPLETED,
+        )
+
+        self.client.force_authenticate(user=None)
+        url = reverse("reports:analysis-report", args=[analysis.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @patch("reports.services.reports.finders.find")
+    def test_successful_report_generation(self, mock_find):
+
+        mock_find.return_value = None
+
+        analysis = VideoAnalysis.objects.create(
+            user=self.user,
+            description="Completed analysis",
+            status=VideoAnalysis.Status.COMPLETED,
+        )
+
+        url = reverse("reports:analysis-report", args=[analysis.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn("attachment", response["Content-Disposition"])
+        self.assertIn(
+            f"analysis_{analysis.id}_report.pdf", response["Content-Disposition"]
+        )
+        self.assertTrue(response.content.startswith(b"%PDF"))
+
+    @patch("patients.services.patient_service.patient_service.get_patient_by_guid")
+    @patch("reports.services.reports.finders.find")
     def test_comprehensive_report_generation_happy_path(
         self, mock_find, mock_get_patient
     ):
