@@ -27,7 +27,7 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          apt-get install ffmpeg libsm6 libxext6  -y
+          sudo apt-get install ffmpeg libsm6 libxext6  -y
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
