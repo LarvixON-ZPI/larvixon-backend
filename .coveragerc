@@ -1,5 +1,6 @@
 [run]
 source =
+    accounts
     analysis
     patients
     reports
@@ -8,6 +9,7 @@ branch = True
 omit =
     */migrations/*
     */tests/*
+    */commands/*
     config*.py
     larvixon_site/*
     *.sh
